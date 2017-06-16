@@ -1,0 +1,4 @@
+[bugtraq]
+url = https://github.com/saxsys/Refactorizer/issues/%BUGID%
+loglinkregex = "#\\d+"
+logregex = \\d+
