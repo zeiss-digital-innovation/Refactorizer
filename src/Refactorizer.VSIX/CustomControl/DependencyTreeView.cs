@@ -47,7 +47,7 @@ namespace Refactorizer.VSIX.CustomControl
             var item = FindViewModelByDataModel(viewModel);
 
             // If not found search traversal for namespaces and classes
-            if (item == null && (viewModel is Namespace || viewModel is Class))
+            if ((item == null || !item.IsVisible) && (viewModel is Namespace || viewModel is Class))
             {
                 var parentTreeViewItem = FindViewModelByDataModel(viewModel.Parent);
                 var reference = parentTreeViewItem?.DataContext as DependencyTreeViewItemViewModel;
