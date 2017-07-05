@@ -15,11 +15,12 @@ namespace Refactorizer.VSIX.Models
 
         public string Name { get; set; }
 
+        /// <inheritdoc />
+        public IModel Parent { get; set; }
+
         public List<Namespace> Namespaces { get; set; } = new List<Namespace>();
 
-        public List<Document> Documents { get; set; } = new List<Document>();
-
-        public List<Project> References { get; } = new List<Project>();
+        public ICollection<IModel> References { get; set; } = new List<IModel>();
 
         public Project(Guid id, ProjectId projectId, string name)
         {

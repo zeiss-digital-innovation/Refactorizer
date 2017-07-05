@@ -5,37 +5,16 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModels="clr-namespace:Refactorizer.VSIX.ViewModels"
              xmlns:vs_shell="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:customControl="clr-namespace:Refactorizer.VSIX.CustomControl"
              Loaded="WindowLoaded"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid Background="Transparent">
-        <Grid x:Name="ProgressSuccess" Margin="20">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="100" />
-                <ColumnDefinition Width="200*" />
-                <ColumnDefinition Width="100" />
-            </Grid.ColumnDefinitions>
-            <Canvas Grid.Column="0" x:Name="OutReferences">
-                <Path Stroke="OrangeRed" StrokeThickness="2">
-                    <Path.Data>
-                        <PathGeometry>
-                            <PathGeometry.Figures>
-                                <PathFigureCollection>
-                                    <PathFigure StartPoint="100,10">
-                                        <PathFigure.Segments>
-                                            <PathSegmentCollection>
-                                                <PolyBezierSegment Points="70,10 70,50 100,50" />
-                                            </PathSegmentCollection>
-                                        </PathFigure.Segments>
-                                    </PathFigure>
-                                </PathFigureCollection>
-                            </PathGeometry.Figures>
-                        </PathGeometry>
-                    </Path.Data>
-                </Path>
-            </Canvas>
-            <TreeView Grid.Column="1" ItemsSource="{Binding Projects}" x:Name="Solution"
-                      Background="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowBackgroundBrushKey}}" BorderBrush="Transparent">
+        <Grid x:Name="ProgressSuccess" Margin="100 20 100 20">
+            <customControl:DependencyTreeView ItemsSource="{Binding Projects}" 
+                      x:Name="Solution"
+                      Background="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowBackgroundBrushKey}}" 
+                      BorderBrush="Transparent">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="{x:Type TreeViewItem}">
                         <Style.Resources>
@@ -47,12 +26,11 @@
                             <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
                                              Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
                         </Style.Resources>
-                        <Setter Property="viewModels:TreeViewItemBehavior.Coordinate" Value="True" />
                         <Setter Property="Background" Value="Transparent" />
                         <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
                         <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
                         <Setter Property="FontWeight" Value="Normal" />
-                        <Setter Property="Margin" Value="2, 1, 2, 1" />
+                        <Setter Property="Padding" Value="5" />
                         <Style.Triggers>
                             <Trigger Property="IsSelected" Value="True">
                                 <Setter Property="FontWeight" Value="Bold" />
@@ -86,8 +64,7 @@
                         </StackPanel>
                     </HierarchicalDataTemplate>
                 </TreeView.Resources>
-            </TreeView>
-            <Canvas Grid.Column="2" x:Name="InReferences"></Canvas>
+            </customControl:DependencyTreeView>
         </Grid>
         <Grid Margin="20" Width="200" Height="20" x:Name="ProgessBarWrapper">
             <ProgressBar Minimum="0" Maximum="100" x:Name="ProgressBar" IsIndeterminate="True" />

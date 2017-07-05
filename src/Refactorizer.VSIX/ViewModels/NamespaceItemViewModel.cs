@@ -3,10 +3,10 @@ using Refactorizer.VSIX.Models;
 
 namespace Refactorizer.VSIX.ViewModels
 {
-    class NamespaceViewItemViewModel : DependencyTreeViewItemViewModel
+    class NamespaceItemViewModel : TreeItemViewModel
     {
 
-        public NamespaceViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
+        public NamespaceItemViewModel(TreeItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
         {
             AddDummy();
         }
@@ -18,7 +18,9 @@ namespace Refactorizer.VSIX.ViewModels
                 return;
 
             foreach (var @class in @namespace.Classes)
-                Children.Add(new ClassViewItemViewModel(this, @class));
+                Children.Add(new ClassItemViewModel(this, @class));
+                
+            // TODO: Add references between TreeViewItems using the id (Guid)
         }
     }
 }

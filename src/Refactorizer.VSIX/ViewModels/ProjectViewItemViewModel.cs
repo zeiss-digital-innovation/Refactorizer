@@ -1,26 +1,28 @@
-﻿using System.Windows.Media;
+﻿using System;
+using System.Linq;
+using System.Windows.Media;
+using Microsoft.CodeAnalysis;
 using Refactorizer.VSIX.Models;
+using Project = Refactorizer.VSIX.Models.Project;
 
 namespace Refactorizer.VSIX.ViewModels
 {
-    class ProjectViewItemViewModel : TreeViewItemViewModel
+    class ProjectViewItemViewModel : DependencyTreeViewItemViewModel
     {
-        private readonly Project _project;
-
-        public ProjectViewItemViewModel(Project project, TreeViewItemViewModel parent) : base(parent)
+        public ProjectViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
         {
-            _project = project;
             AddDummy();
         }
 
         protected override void Loadchildren()
         {
-            foreach (var ns in _project.Namespaces)
-            {
-                Children.Add(new NamespaceViewItemViewModel(ns, this));
-            }
-        }
+            var project = RelatedModel as Project;
+            if (project == null)
+                return;
 
-        public override string Name => _project.Name;
+            // Add view model references
+            foreach (var ns in project.Namespaces)
+                Children.Add(new NamespaceViewItemViewModel(this, ns));
+        }
     }
 }

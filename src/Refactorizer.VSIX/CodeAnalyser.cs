@@ -9,7 +9,6 @@ using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.VisualStudio.Shell.Interop;
 using Refactorizer.VSIX.Exception;
 using Refactorizer.VSIX.Models;
-using Document = Refactorizer.VSIX.Models.Document;
 using MSDocument = Microsoft.CodeAnalysis.Document;
 using MSSolution = Microsoft.CodeAnalysis.Solution;
 using MSProject = Microsoft.CodeAnalysis.Project;
@@ -23,11 +22,11 @@ namespace Refactorizer.VSIX
     {
         private readonly ClassnameFormater _classnameFormater;
 
-        private readonly Dictionary<Guid, List<string>> _classToClass = new Dictionary<Guid, List<string>>();
+        private Dictionary<Guid, List<string>> _classToClass = new Dictionary<Guid, List<string>>();
 
-        private readonly Dictionary<Guid, List<string>> _namespaceToNamespace = new Dictionary<Guid, List<string>>();
+        private Dictionary<Guid, List<string>> _namespaceToNamespace = new Dictionary<Guid, List<string>>();
 
-        private readonly Dictionary<Guid, List<ProjectId>> _projectToProject = new Dictionary<Guid, List<ProjectId>>();
+        private Dictionary<Guid, List<ProjectId>> _projectToProject = new Dictionary<Guid, List<ProjectId>>();
 
         public CodeAnalyser()
         {
@@ -52,6 +51,11 @@ namespace Refactorizer.VSIX
         public async Task<Solution> GenerateDependencyTree()
         {
             var solution = new Solution();
+
+            // Reset temp storages
+            _classToClass = new Dictionary<Guid, List<string>>();
+            _namespaceToNamespace = new Dictionary<Guid, List<string>>();
+            _projectToProject = new Dictionary<Guid, List<ProjectId>>();
 
             // TODO: Handle all parallel to improve performance
             foreach (var msProject in (await GetCurrentSolution()).Projects)
@@ -125,7 +129,7 @@ namespace Refactorizer.VSIX
                         if (reference == null)
                             foreach (var namespaceReference in @namespace.References)
                             {
-                                reference = GetClassByNameFromNamespace(namespaceReference, nameReference);
+                                reference = GetClassByNameFromNamespace((Namespace) namespaceReference, nameReference);
                                 if (reference != null)
                                     break;
                             }
@@ -147,14 +151,12 @@ namespace Refactorizer.VSIX
 
         private async Task AddNamespaces(Project project, MSDocument msDocument)
         {
-            var document = new Document(Guid.NewGuid(), msDocument.Name);
-
             // We use the syntax tree to find all declareded classes inside this dockument
             var documentSyntaxRoot = await msDocument.GetSyntaxRootAsync();
 
             // We need the semanic model to query some informations of nodes
             var model = await msDocument.GetSemanticModelAsync();
-
+            
             var referencedNamespaces = GetRelatedNamespaces(documentSyntaxRoot, model);
 
             // Use the syntax tree to get all namepace definitions inside
@@ -173,15 +175,14 @@ namespace Refactorizer.VSIX
                 var @namespace = project.Namespaces.FirstOrDefault(x => x.Name.Equals(namespaceName));
                 if (@namespace == null)
                 {
-                    @namespace = new Namespace(Guid.NewGuid(), namespaceName);
+                    @namespace = new Namespace(Guid.NewGuid(), namespaceName, project);
                     project.Namespaces.Add(@namespace);
                     _namespaceToNamespace.Add(@namespace.Id, referencedNamespaces);
                 }
                 else
                 {
                     _namespaceToNamespace[@namespace.Id] = _namespaceToNamespace[@namespace.Id]
-                        .Union(referencedNamespaces) as List<string>;
-                    ;
+                        .Union(referencedNamespaces).ToList();
                 }
 
                 // Use the syntax tree to get all classes declarations inside
@@ -197,14 +198,12 @@ namespace Refactorizer.VSIX
                     var referencedClasses = await GetReferences(classDeclaration);
 
                     var @class = new Class(Guid.NewGuid(),
-                        _classnameFormater.FormatClassFullName(className, namespaceName), className);
+                        _classnameFormater.FormatClassFullName(className, namespaceName), className, @namespace);
                     _classToClass.Add(@class.Id, referencedClasses);
 
-                    document.Classes.Add(@class);
                     @namespace.Classes.Add(@class);
                 }
             }
-            project.Documents.Add(document);
         }
 
         private List<string> GetRelatedNamespaces(SyntaxNode syntaxTree, SemanticModel model)
@@ -217,9 +216,10 @@ namespace Refactorizer.VSIX
             foreach (var usingDirectiveSyntax in usings)
             {
                 var info = model.GetSymbolInfo(usingDirectiveSyntax.Name);
-                if (info.Equals(null))
-                    continue;
                 var symbol = info.Symbol;
+                if (symbol == null)
+                    continue;
+
                 relatedNamespaces.Add(symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat));
             }
 

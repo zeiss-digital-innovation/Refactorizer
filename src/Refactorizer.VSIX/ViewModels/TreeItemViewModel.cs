@@ -1,13 +1,18 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Windows;
+using Refactorizer.VSIX.Models;
 
 namespace Refactorizer.VSIX.ViewModels
 {
-    public class TreeViewItemViewModel : NotifyPropertyChanged
+    public class TreeItemViewModel : NotifyPropertyChanged
     {
-        private readonly TreeViewItemViewModel _parent;
+        private readonly TreeItemViewModel _parent;
 
-        private static readonly TreeViewItemViewModel DummyChild = new TreeViewItemViewModel();
+        public IModel RelatedModel { get; }
+
+        private static readonly TreeItemViewModel DummyChild = new TreeItemViewModel();
 
         private bool _isExpanded;
         private bool _isSelected;
@@ -43,28 +48,19 @@ namespace Refactorizer.VSIX.ViewModels
             }
         }
 
-        private Point _coordinate;
+        public ObservableCollection<TreeItemViewModel> Children { get; } = new ObservableCollection<TreeItemViewModel>();
 
-        public Point Coordinate
-        {
-            get => _coordinate;
-            set
-            {
-                _coordinate = value;
-                SetField(ref _coordinate, value, "Coordinate");
-            }
-        }
-
-        public ObservableCollection<TreeViewItemViewModel> Children { get; } = new ObservableCollection<TreeViewItemViewModel>();
+        public ObservableCollection<TreeItemViewModel> References { get; } = new ObservableCollection<TreeItemViewModel>();
 
         public bool HasDummyChild => this.Children.Count == 1 && this.Children[0] == DummyChild;
 
-        protected TreeViewItemViewModel(TreeViewItemViewModel parent)
+        protected TreeItemViewModel(TreeItemViewModel parent, IModel relatedModel)
         {
             _parent = parent;
+            RelatedModel = relatedModel;
         }
 
-        public TreeViewItemViewModel()
+        private TreeItemViewModel()
         {
         }
 
@@ -77,6 +73,6 @@ namespace Refactorizer.VSIX.ViewModels
         {
         }
 
-        public virtual string Name => "Dummy";
+        public virtual string Name => RelatedModel.Name;
     }
 }
