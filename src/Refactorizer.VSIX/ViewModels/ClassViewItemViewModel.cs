@@ -9,7 +9,7 @@ namespace Refactorizer.VSIX.ViewModels
         {
         }
 
-        protected override void Loadchildren()
+        public override void Loadchildren()
         {
         }
     }

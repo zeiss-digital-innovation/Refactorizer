@@ -11,60 +11,62 @@
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid Background="Transparent">
         <Grid x:Name="ProgressSuccess" Margin="100 20 100 20">
-            <customControl:DependencyTreeView ItemsSource="{Binding Projects}" 
+            <AdornerDecorator>
+                <customControl:DependencyTreeView ItemsSource="{Binding Projects}" 
                       x:Name="Solution"
                       Background="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowBackgroundBrushKey}}" 
                       BorderBrush="Transparent">
-                <TreeView.ItemContainerStyle>
-                    <Style TargetType="{x:Type TreeViewItem}">
-                        <Style.Resources>
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
-                            <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
-                                             Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTabSelectedTabColorKey}}" />
-                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
-                                             Color="Transparent" />
-                            <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                                             Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                        </Style.Resources>
-                        <Setter Property="Background" Value="Transparent" />
-                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                        <Setter Property="FontWeight" Value="Normal" />
-                        <Setter Property="Padding" Value="5" />
-                        <Style.Triggers>
-                            <Trigger Property="IsSelected" Value="True">
-                                <Setter Property="FontWeight" Value="Bold" />
-                            </Trigger>
-                        </Style.Triggers>
-                    </Style>
-                </TreeView.ItemContainerStyle>
+                    <TreeView.ItemContainerStyle>
+                        <Style TargetType="{x:Type TreeViewItem}">
+                            <Style.Resources>
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="Transparent" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}"
+                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTabSelectedTabColorKey}}" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
+                                                 Color="Transparent" />
+                                <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
+                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </Style.Resources>
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                            <Setter Property="FontWeight" Value="Normal" />
+                            <Setter Property="Padding" Value="5" />
+                            <Style.Triggers>
+                                <Trigger Property="IsSelected" Value="True">
+                                    <Setter Property="FontWeight" Value="Bold" />
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TreeView.ItemContainerStyle>
 
-                <TreeView.Resources>
-                    <HierarchicalDataTemplate
-                        DataType="{x:Type viewModels:ProjectViewItemViewModel}"
-                        ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
+                    <TreeView.Resources>
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:ProjectViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
 
-                    <HierarchicalDataTemplate
-                        DataType="{x:Type viewModels:NamespaceViewItemViewModel}"
-                        ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:NamespaceViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
 
-                    <HierarchicalDataTemplate
-                        DataType="{x:Type viewModels:ClassViewItemViewModel}"
-                        ItemsSource="{Binding Children}">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                        </StackPanel>
-                    </HierarchicalDataTemplate>
-                </TreeView.Resources>
-            </customControl:DependencyTreeView>
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:ClassViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+                    </TreeView.Resources>
+                </customControl:DependencyTreeView>
+            </AdornerDecorator>
         </Grid>
         <Grid Margin="20" Width="200" Height="20" x:Name="ProgessBarWrapper">
             <ProgressBar Minimum="0" Maximum="100" x:Name="ProgressBar" IsIndeterminate="True" />

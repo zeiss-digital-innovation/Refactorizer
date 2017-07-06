@@ -11,7 +11,7 @@ namespace Refactorizer.VSIX.ViewModels
             AddDummy();
         }
 
-        protected override void Loadchildren()
+        public override void Loadchildren()
         {
             var @namespace = RelatedModel as Namespace;
             if (@namespace == null)

@@ -23,11 +23,7 @@ namespace Refactorizer.VSIX.ViewModels
             set
             {
                 // Load all childs 
-                if (HasDummyChild)
-                {
-                    Children.Remove(DummyChild);
-                    Loadchildren();
-                }
+                RemoveDummyAndLoadChildren();
 
                 // Expand all parents
                 if (_parent != null && !_parent.IsExpanded)
@@ -35,6 +31,15 @@ namespace Refactorizer.VSIX.ViewModels
 
                 _isExpanded = value;
                 SetField(ref _isExpanded, value, "IsExpanded");
+            }
+        }
+
+        public void RemoveDummyAndLoadChildren()
+        {
+            if (HasDummyChild)
+            {
+                Children.Remove(DummyChild);
+                Loadchildren();
             }
         }
 
@@ -69,10 +74,11 @@ namespace Refactorizer.VSIX.ViewModels
             this.Children.Add(DummyChild);
         }
 
-        protected virtual void Loadchildren()
+        public virtual void Loadchildren()
         {
         }
 
+        
         public virtual string Name => RelatedModel.Name;
     }
 }

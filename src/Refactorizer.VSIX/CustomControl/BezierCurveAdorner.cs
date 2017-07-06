@@ -34,16 +34,6 @@ namespace Refactorizer.VSIX.CustomControl
             var pathGeometry = new PathGeometry(new[] {pathFigure});
 
             drawingContext.DrawGeometry(Brushes.Transparent, pen, pathGeometry);
-
-            // For debug 
-            var p1 = new Pen(new SolidColorBrush(Colors.DarkViolet), 1.5);
-            var p2 = new Pen(new SolidColorBrush(Colors.DodgerBlue), 1.5);
-            var p3 = new Pen(new SolidColorBrush(Colors.White), 1.5);
-            var p4 = new Pen(new SolidColorBrush(Colors.GreenYellow), 1.5);
-            drawingContext.DrawEllipse(Brushes.Transparent, p1, From, 1, 1);
-            drawingContext.DrawEllipse(Brushes.Transparent, p2, ControlOne, 1, 1);
-            drawingContext.DrawEllipse(Brushes.Transparent, p3, ControlTwo, 1, 1);
-            drawingContext.DrawEllipse(Brushes.Transparent, p4, To, 1, 1);
         }
     }
 }

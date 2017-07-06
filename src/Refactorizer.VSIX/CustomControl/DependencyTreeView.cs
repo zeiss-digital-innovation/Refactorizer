@@ -1,5 +1,7 @@
-﻿using System.Collections.ObjectModel;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -58,6 +60,31 @@ namespace Refactorizer.VSIX.CustomControl
             }
 
             return item;
+        }
+
+        public List<DependencyTreeViewItem> FindLastExpandedDependencyTreeViewItems(DependencyTreeViewItem root)
+        {
+            var viewModel = root.DataContext as DependencyTreeViewItemViewModel;
+            if (viewModel == null)
+                return null;
+
+            var tmp = new List<DependencyTreeViewItem>();
+
+            foreach (var childViewModel in viewModel.Children)
+            {
+                var childTreeItem = FindViewItemByViewModel(childViewModel);
+                if (childViewModel.IsExpanded)
+                {
+                    tmp = tmp.Union(FindLastExpandedDependencyTreeViewItems(childTreeItem)).ToList();
+                }
+                else
+                {
+                    if (!tmp.Contains(childTreeItem))
+                        tmp.Add(childTreeItem);
+                }
+            }
+
+            return tmp;
         }
 
         public DependencyTreeViewItem FindViewItemByViewModel(DependencyTreeViewItemViewModel viewModel)
