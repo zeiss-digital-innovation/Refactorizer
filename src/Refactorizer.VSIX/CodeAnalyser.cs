@@ -193,8 +193,9 @@ namespace Refactorizer.VSIX
                 foreach (var classDeclaration in classes)
                 {
                     var symbol = model.GetDeclaredSymbol(classDeclaration);
+                    var baseList = classDeclaration.BaseList;
                     var root = await classDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetReferences(root);
+                    var referencedClasses = GetReferences(root, baseList);
 
                     CreateClass(symbol, namespaceName, @namespace, referencedClasses);
                 }
@@ -205,15 +206,17 @@ namespace Refactorizer.VSIX
                 foreach (var interfaceDeclaration in interfaces)
                 {
                     var symbol = model.GetDeclaredSymbol(interfaceDeclaration);
+                    var baseList = interfaceDeclaration.BaseList;
                     var root = await interfaceDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetReferences(root);
+                    var referencedClasses = GetReferences(root, baseList);
 
                     CreateClass(symbol, namespaceName, @namespace, referencedClasses);
                 }
             }
         }
 
-        private void CreateClass(ISymbol symbol, string namespaceName, Namespace @namespace, List<string> referencedClasses)
+        private void CreateClass(ISymbol symbol, string namespaceName, Namespace @namespace,
+            List<string> referencedClasses)
         {
             var className = symbol.Name;
             // Find all referenced classes inside this class
@@ -245,24 +248,26 @@ namespace Refactorizer.VSIX
             return relatedNamespaces;
         }
 
-        private List<string> GetReferences(SyntaxNode syntaxTree)
+        private List<string> GetReferences(SyntaxNode syntaxTree, BaseListSyntax baseList)
         {
             var classDefinitions = new List<string>();
 
             // Use the syntax tree of class delaration to find all created objects inisde this class
             var objectCreations = syntaxTree.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
 
-            // all object creations inside document
-            foreach (var objectCreationExpressionSyntax in objectCreations)
+            if (baseList != null)
             {
-                var identifierNameSyntax = objectCreationExpressionSyntax.Type as IdentifierNameSyntax;
-                var name = identifierNameSyntax?.Identifier.ToString();
-
-                if (string.IsNullOrEmpty(name))
-                    continue;
-
-                classDefinitions.Add(name);
+                var baseTypes = baseList.Types.ToList();
+                classDefinitions.AddRange(from baseType in baseTypes
+                    where baseType != null
+                    select baseType.Type.ToString());
             }
+
+            // all object creations inside document
+            classDefinitions.AddRange(objectCreations
+                .Select(objectCreationExpressionSyntax => objectCreationExpressionSyntax.Type as IdentifierNameSyntax)
+                .Select(identifierNameSyntax => identifierNameSyntax?.Identifier.ToString())
+                .Where(name => !string.IsNullOrEmpty(name)));
 
             return classDefinitions;
         }
