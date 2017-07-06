@@ -156,7 +156,7 @@ namespace Refactorizer.VSIX
 
             // We need the semanic model to query some informations of nodes
             var model = await msDocument.GetSemanticModelAsync();
-            
+
             var referencedNamespaces = GetRelatedNamespaces(documentSyntaxRoot, model);
 
             // Use the syntax tree to get all namepace definitions inside
@@ -171,6 +171,7 @@ namespace Refactorizer.VSIX
                 var namespaceSymbol = model.GetDeclaredSymbol(namespaceDeclarationSyntax);
 
                 var namespaceName = namespaceSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+
                 // Check for exisiting namespace
                 var @namespace = project.Namespaces.FirstOrDefault(x => x.Name.Equals(namespaceName));
                 if (@namespace == null)
@@ -192,18 +193,36 @@ namespace Refactorizer.VSIX
                 foreach (var classDeclaration in classes)
                 {
                     var symbol = model.GetDeclaredSymbol(classDeclaration);
-                    var className = symbol.Name;
+                    var root = await classDeclaration.SyntaxTree.GetRootAsync();
+                    var referencedClasses = GetReferences(root);
 
-                    // Find all referenced classes inside this class
-                    var referencedClasses = await GetReferences(classDeclaration);
+                    CreateClass(symbol, namespaceName, @namespace, referencedClasses);
+                }
 
-                    var @class = new Class(Guid.NewGuid(),
-                        _classnameFormater.FormatClassFullName(className, namespaceName), className, @namespace);
-                    _classToClass.Add(@class.Id, referencedClasses);
+                // Use the syntax tree to get all interface declations inside
+                var interfaces = namespaceSyntaxRoot.DescendantNodes().OfType<InterfaceDeclarationSyntax>();
 
-                    @namespace.Classes.Add(@class);
+                foreach (var interfaceDeclaration in interfaces)
+                {
+                    var symbol = model.GetDeclaredSymbol(interfaceDeclaration);
+                    var root = await interfaceDeclaration.SyntaxTree.GetRootAsync();
+                    var referencedClasses = GetReferences(root);
+
+                    CreateClass(symbol, namespaceName, @namespace, referencedClasses);
                 }
             }
+        }
+
+        private void CreateClass(ISymbol symbol, string namespaceName, Namespace @namespace, List<string> referencedClasses)
+        {
+            var className = symbol.Name;
+            // Find all referenced classes inside this class
+
+            var @class = new Class(Guid.NewGuid(),
+                _classnameFormater.FormatClassFullName(className, namespaceName), className, @namespace);
+            _classToClass.Add(@class.Id, referencedClasses);
+
+            @namespace.Classes.Add(@class);
         }
 
         private List<string> GetRelatedNamespaces(SyntaxNode syntaxTree, SemanticModel model)
@@ -226,11 +245,9 @@ namespace Refactorizer.VSIX
             return relatedNamespaces;
         }
 
-        private async Task<List<string>> GetReferences(ClassDeclarationSyntax classDeclaration)
+        private List<string> GetReferences(SyntaxNode syntaxTree)
         {
             var classDefinitions = new List<string>();
-
-            var syntaxTree = await classDeclaration.SyntaxTree.GetRootAsync();
 
             // Use the syntax tree of class delaration to find all created objects inisde this class
             var objectCreations = syntaxTree.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();

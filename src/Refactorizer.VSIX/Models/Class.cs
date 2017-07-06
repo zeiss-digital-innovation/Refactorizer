@@ -23,5 +23,7 @@ namespace Refactorizer.VSIX.Models
         public ICollection<IModel> References { get; set; } = new List<IModel>();
 
         public Guid Id { get; }
+
+        public bool IsInterface { get; set; } = false;
     }
 }
