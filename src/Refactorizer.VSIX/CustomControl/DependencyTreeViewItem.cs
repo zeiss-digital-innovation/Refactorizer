@@ -13,7 +13,11 @@ namespace Refactorizer.VSIX.CustomControl
     {
         private readonly DependencyTreeView _host;
 
-        private Dictionary<Guid, BezierCurveAdorner> _drawedLines = new Dictionary<Guid, BezierCurveAdorner>();
+        private Dictionary<Guid, BezierCurveAdorner> _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
+
+        private Dictionary<Guid, BezierCurveAdorner> _inReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
+
+        public List<DependencyTreeViewItem> InReferenceArdoner = new List<DependencyTreeViewItem>();
 
         private readonly Dictionary<Guid, TreeViewItem> _indirectRefererencedTreeViewItems =
             new Dictionary<Guid, TreeViewItem>();
@@ -23,12 +27,6 @@ namespace Refactorizer.VSIX.CustomControl
             _host = host;
             DataContextChanged += TreeCanvasItemDataContextChanged;
         }
-
-        public ObservableCollection<BezierCurveAdorner> OutLines { get; set; } =
-            new ObservableCollection<BezierCurveAdorner>();
-
-        public ObservableCollection<BezierCurveAdorner> InLines { get; set; } =
-            new ObservableCollection<BezierCurveAdorner>();
 
         /// <summary>
         ///     Set the child item type
@@ -76,7 +74,7 @@ namespace Refactorizer.VSIX.CustomControl
 
                             var childrenOfReference =
                                 _host.FindLastExpandedDependencyTreeViewItems(referenceTreeViewItem);
-                            if (childrenOfReference.Count > 0 && _drawedLines.ContainsKey(reference.Id))
+                            if (childrenOfReference.Count > 0 && _outReferenceArdoner.ContainsKey(reference.Id))
                             {
                                 DeleteArdoner(reference.Id);
                             }
@@ -87,15 +85,20 @@ namespace Refactorizer.VSIX.CustomControl
                                 if (childDataModel == null) continue;
 
                                 var model = childDataModel.RelatedModel;
-                                CreateAdroner(child, relatedModel, model);
+                                CreateOutRefrenceArdoner(child, relatedModel, model);
 
                                 if (_indirectRefererencedTreeViewItems.ContainsKey(model.Id)) continue;
                                 _indirectRefererencedTreeViewItems.Add(model.Id, child);
                             }
+
+                            if (childrenOfReference.Count == 0)
+                            {
+                                CreateOutRefrenceArdoner(referenceTreeViewItem, relatedModel, reference);
+                            }
                         }
                         else
                         {
-                            CreateAdroner(referenceTreeViewItem, relatedModel, reference);
+                            CreateOutRefrenceArdoner(referenceTreeViewItem, relatedModel, reference);
                         }
                     }
                     foreach (var key in _indirectRefererencedTreeViewItems.Keys.ToList())
@@ -112,15 +115,15 @@ namespace Refactorizer.VSIX.CustomControl
 
         private void DeleteArdoner(Guid id)
         {
-            if (!_drawedLines.ContainsKey(id))
+            if (!_outReferenceArdoner.ContainsKey(id))
                 return;
 
-            var adorner = _drawedLines[id];
-            _drawedLines.Remove(id);
+            var adorner = _outReferenceArdoner[id];
+            _outReferenceArdoner.Remove(id);
             _host.OutReferencesAdornerLayer.Remove(adorner);
         }
 
-        private BezierCurveAdorner CreateAdroner(DependencyTreeViewItem referenceTreeViewItem, IModel relatedModel,
+        private BezierCurveAdorner CreateOutRefrenceArdoner(DependencyTreeViewItem referenceTreeViewItem, IModel relatedModel,
             IModel reference)
         {
             BezierCurveAdorner adorner;
@@ -139,8 +142,8 @@ namespace Refactorizer.VSIX.CustomControl
 
             if (relatedModel.Parent != null && !relatedModel.Parent.Id.Equals(reference.Parent.Id))
             {
-                fromXOffset = xOffset * (relatedModel is Class ? 3 : relatedModel is Namespace ? 2 : 1);
-                toXOffset = xOffset * (reference is Class ? 3 : reference is Namespace ? 2 : 1);
+                fromXOffset = xOffset * (relatedModel is Method ? 4 : relatedModel is Class ? 3 : relatedModel is Namespace ? 2 : 1);
+                toXOffset = xOffset * (reference is Method ? 4 : reference is Class ? 3 : reference is Namespace ? 2 : 1);
             }
 
             controlOne.X = @from.X - fromXOffset;
@@ -149,9 +152,13 @@ namespace Refactorizer.VSIX.CustomControl
             controlTwo.X = to.X - toXOffset;
             controlTwo.Y = to.Y;
 
-            if (_drawedLines.ContainsKey(reference.Id))
+            if (_outReferenceArdoner.ContainsKey(reference.Id))
             {
-                adorner = _drawedLines[reference.Id];
+                adorner = _outReferenceArdoner[reference.Id];
+
+                // Adding this item to InReference of referenced tree view item to draw the backline
+                referenceTreeViewItem.InReferenceArdoner.Add(this);
+               
                 // Only update if some some point has changed
                 if (adorner.From != @from ||
                     adorner.ControlOne != controlOne ||
@@ -169,10 +176,8 @@ namespace Refactorizer.VSIX.CustomControl
             {
                 adorner = new BezierCurveAdorner(this, @from, controlOne, controlTwo, to) {IsHitTestVisible = false};
                 // Make adorner not clickable, otherwise we could get in trouble open or closing a tree item
-                OutLines.Add(adorner);
-
                 _host.OutReferencesAdornerLayer.Add(adorner);
-                _drawedLines.Add(reference.Id, adorner);
+                _outReferenceArdoner.Add(reference.Id, adorner);
             }
 
             return adorner;
@@ -180,12 +185,12 @@ namespace Refactorizer.VSIX.CustomControl
 
         private void DeleteLines()
         {
-            foreach (var keyValuePair in _drawedLines)
+            foreach (var keyValuePair in _outReferenceArdoner)
                 _host.OutReferencesAdornerLayer.Remove(keyValuePair.Value);
 
             _host.OutReferencesAdornerLayer.UpdateLayout();
 
-            _drawedLines = new Dictionary<Guid, BezierCurveAdorner>();
+            _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
         }
     }
 }

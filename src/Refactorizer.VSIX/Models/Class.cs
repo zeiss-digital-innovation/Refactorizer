@@ -22,8 +22,18 @@ namespace Refactorizer.VSIX.Models
 
         public ICollection<IModel> References { get; set; } = new List<IModel>();
 
+        public bool HasChildren => Methods.Count > 0;
+
         public Guid Id { get; }
 
         public bool IsInterface { get; set; } = false;
+
+        public List<Method> Methods { get; set; } = new List<Method>();
+
+        public List<Property> Properties { get; set; } = new List<Property>();
+
+        public List<Field> Fields { get; set; } = new List<Field>();
+
+        public AccessLevel AccessLevel { get; set; } = AccessLevel.Public;
     }
 }

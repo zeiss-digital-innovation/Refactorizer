@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.ServiceModel.Configuration;
 using System.Threading.Tasks;
 using EnvDTE;
 using Microsoft.CodeAnalysis;
@@ -14,19 +15,27 @@ using MSSolution = Microsoft.CodeAnalysis.Solution;
 using MSProject = Microsoft.CodeAnalysis.Project;
 using Package = Microsoft.VisualStudio.Shell.Package;
 using Project = Refactorizer.VSIX.Models.Project;
+using Property = Refactorizer.VSIX.Models.Property;
 using Solution = Refactorizer.VSIX.Models.Solution;
 
 namespace Refactorizer.VSIX
 {
+    // TODO: Split in multiple classes
     internal class CodeAnalyser
     {
         private readonly ClassnameFormater _classnameFormater;
+
+        private Dictionary<Guid, List<string>> _methodToMetod = new Dictionary<Guid, List<string>>();
 
         private Dictionary<Guid, List<string>> _classToClass = new Dictionary<Guid, List<string>>();
 
         private Dictionary<Guid, List<string>> _namespaceToNamespace = new Dictionary<Guid, List<string>>();
 
         private Dictionary<Guid, List<ProjectId>> _projectToProject = new Dictionary<Guid, List<ProjectId>>();
+
+        private Dictionary<Guid, string> _propertyToType = new Dictionary<Guid, string>();
+
+        private Dictionary<Guid, string> _fieldToType = new Dictionary<Guid, string>();
 
         public CodeAnalyser()
         {
@@ -195,9 +204,9 @@ namespace Refactorizer.VSIX
                     var symbol = model.GetDeclaredSymbol(classDeclaration);
                     var baseList = classDeclaration.BaseList;
                     var root = await classDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetReferences(root, baseList);
+                    var referencedClasses = GetClassReferences(root, baseList);
 
-                    CreateClass(symbol, namespaceName, @namespace, referencedClasses);
+                    CreateClass(root, symbol, namespaceName, @namespace, referencedClasses);
                 }
 
                 // Use the syntax tree to get all interface declations inside
@@ -208,26 +217,12 @@ namespace Refactorizer.VSIX
                     var symbol = model.GetDeclaredSymbol(interfaceDeclaration);
                     var baseList = interfaceDeclaration.BaseList;
                     var root = await interfaceDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetReferences(root, baseList);
+                    var referencedClasses = GetClassReferences(root, baseList);
 
-                    CreateClass(symbol, namespaceName, @namespace, referencedClasses);
+                    CreateClass(root, symbol, namespaceName, @namespace, referencedClasses);
                 }
             }
         }
-
-        private void CreateClass(ISymbol symbol, string namespaceName, Namespace @namespace,
-            List<string> referencedClasses)
-        {
-            var className = symbol.Name;
-            // Find all referenced classes inside this class
-
-            var @class = new Class(Guid.NewGuid(),
-                _classnameFormater.FormatClassFullName(className, namespaceName), className, @namespace);
-            _classToClass.Add(@class.Id, referencedClasses);
-
-            @namespace.Classes.Add(@class);
-        }
-
         private List<string> GetRelatedNamespaces(SyntaxNode syntaxTree, SemanticModel model)
         {
             var usings = syntaxTree.DescendantNodes().OfType<UsingDirectiveSyntax>();
@@ -248,28 +243,166 @@ namespace Refactorizer.VSIX
             return relatedNamespaces;
         }
 
-        private List<string> GetReferences(SyntaxNode syntaxTree, BaseListSyntax baseList)
+        private void CreateClass(SyntaxNode root, ISymbol symbol, string namespaceName, Namespace @namespace, List<string> referencedClasses)
         {
-            var classDefinitions = new List<string>();
+            var className = symbol.Name;
+            // Find all referenced classes inside this class
 
-            // Use the syntax tree of class delaration to find all created objects inisde this class
-            var objectCreations = syntaxTree.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            var @class = new Class(Guid.NewGuid(),
+                _classnameFormater.FormatClassFullName(className, namespaceName), className, @namespace);
+            _classToClass.Add(@class.Id, referencedClasses);
 
+            @namespace.Classes.Add(@class);
+
+            AddFields(root, @class);
+            AddProperties(root, @class);
+            AddMethods(root, @class);
+        }
+
+        // TODO: Handle generics https://stackoverflow.com/questions/43210137/how-to-check-if-method-parameter-type-return-type-is-generic-in-roslyn
+        private void AddMethods(SyntaxNode syntaxTree, Class @class)
+        {
+            var allReferences = new List<string>();
+            
+            // Constructors
+            var constructorDeclarations = syntaxTree.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
+            foreach (var constructorDeclaration in constructorDeclarations)
+            {
+                var methodName = constructorDeclaration.Identifier.ToString();
+                var parameterDeclarations = constructorDeclaration.ParameterList.Parameters;
+
+                var references = new List<string>();
+                var parameterAsString = GetMethodParametersAsStringList(parameterDeclarations, references);
+
+                var method = new Method(Guid.NewGuid(), methodName, @class )
+                {
+                    Signature =  $"{methodName}({parameterAsString})"
+                };
+
+                @class.Methods.Add(method);
+                _methodToMetod.Add(method.Id, references);
+            }
+
+            // Methods
+            var methodDeclarations = syntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            foreach (var methodDeclartion in methodDeclarations)
+            {
+                var methodName = methodDeclartion.Identifier.ToString();
+                var returnType = methodDeclartion.ReturnType.ToString();
+                allReferences.Add(returnType);
+                var parameterDeclarations = methodDeclartion.ParameterList.Parameters;
+
+                var references = new List<string>();
+                var parameterAsString = GetMethodParametersAsStringList(parameterDeclarations, references);
+
+                var method = new Method(Guid.NewGuid(), methodName, @class )
+                {
+                    ReturnType = returnType,
+                    Signature =  $"{returnType} {methodName}({parameterAsString})"
+                };
+
+                @class.Methods.Add(method);
+                _methodToMetod.Add(method.Id, references);
+            }
+            _classToClass[@class.Id] = _classToClass[@class.Id].Union(allReferences).ToList();
+        }
+
+        private string GetMethodParametersAsStringList(SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, List<string> references)
+        {
+            var parametersAsListOfStrings = new List<string>();
+            foreach (var parameter in parameterDeclarations)
+            {
+                var parameterName = parameter.Identifier.ToString();
+                var parameterType = parameter.Type.ToString();
+                references.Add(parameterType);
+
+                parametersAsListOfStrings.Add($"{parameterType} {parameterName}");
+            }
+            return string.Join(", ", parametersAsListOfStrings);
+        }
+
+        private void AddFields(SyntaxNode root, Class @class)
+        {
+            var allReferences = new List<string>();
+
+            var fieldDeclarations = root.DescendantNodes().OfType<FieldDeclarationSyntax>();
+            foreach (var fieldDeclarationSyntax in fieldDeclarations)
+            {
+                var identifierNameSyntax = fieldDeclarationSyntax.Declaration.Type as IdentifierNameSyntax;
+                var type = identifierNameSyntax?.Identifier.ToString();
+                var name = fieldDeclarationSyntax.Declaration.Variables.ToString();
+                if (string.IsNullOrEmpty(type))
+                    continue;
+
+                if (allReferences.Contains(type))
+                    continue;
+
+                var field = new Field(Guid.NewGuid(), name, @class, $"{type} {name}");
+                @class.Fields.Add(field);
+                _fieldToType.Add(field.Id, type);
+
+                allReferences.Add(type);
+            }
+
+            _classToClass[@class.Id] = _classToClass[@class.Id].Union(allReferences).ToList();
+        }
+
+        private void AddProperties(SyntaxNode root, Class @class)
+        {
+            var allReferences = new List<string>();
+
+            var propertyDeclarations = root.DescendantNodes().OfType<PropertyDeclarationSyntax>();
+            foreach (var propertyDeclarationSyntax in propertyDeclarations)
+            {
+                var identifierNameSyntax = propertyDeclarationSyntax.Type as IdentifierNameSyntax;
+                var name = identifierNameSyntax?.Identifier.ToString();
+                var type = propertyDeclarationSyntax.Type.ToString();
+
+                if (string.IsNullOrEmpty(name))
+                    continue;
+                
+                if (allReferences.Contains(name))
+                    continue;
+
+                var property = new Property(Guid.NewGuid(), name, @class, $"{type} {name}");
+                @class.Properties.Add(property);
+                _propertyToType.Add(property.Id, type);
+
+                allReferences.Add(type);
+            }
+
+            _classToClass[@class.Id] = _classToClass[@class.Id].Union(allReferences).ToList();
+        }
+
+        private List<string> GetClassReferences(SyntaxNode syntaxTree, BaseListSyntax baseList)
+        {
+            var references = new List<string>();
+
+            // Add inheritanced types to references
             if (baseList != null)
             {
                 var baseTypes = baseList.Types.ToList();
-                classDefinitions.AddRange(from baseType in baseTypes
+                references.AddRange(from baseType in baseTypes
                     where baseType != null
                     select baseType.Type.ToString());
             }
 
-            // all object creations inside document
-            classDefinitions.AddRange(objectCreations
-                .Select(objectCreationExpressionSyntax => objectCreationExpressionSyntax.Type as IdentifierNameSyntax)
-                .Select(identifierNameSyntax => identifierNameSyntax?.Identifier.ToString())
-                .Where(name => !string.IsNullOrEmpty(name)));
+            // Add all object creations inside class to references
+            var objectCreations = syntaxTree.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
+            foreach (var objectCreationExpressionSyntax in objectCreations)
+            {
+                var identifierNameSyntax = objectCreationExpressionSyntax.Type as IdentifierNameSyntax;
+                var name = identifierNameSyntax?.Identifier.ToString();
 
-            return classDefinitions;
+                if (string.IsNullOrEmpty(name))
+                    continue;
+
+                if (references.Contains(name))
+                    continue;
+
+                references.Add(name);
+            }
+            return references;
         }
     }
 }

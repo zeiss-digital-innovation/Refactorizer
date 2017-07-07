@@ -63,6 +63,9 @@ namespace Refactorizer.VSIX.ViewModels
         {
             _parent = parent;
             RelatedModel = relatedModel;
+
+            if (RelatedModel.HasChildren)
+                AddDummy();
         }
 
         private DependencyTreeViewItemViewModel()

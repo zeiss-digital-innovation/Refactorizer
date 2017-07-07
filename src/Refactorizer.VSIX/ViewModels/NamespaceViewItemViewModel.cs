@@ -1,4 +1,3 @@
-using System;
 using Refactorizer.VSIX.Models;
 
 namespace Refactorizer.VSIX.ViewModels
@@ -8,7 +7,6 @@ namespace Refactorizer.VSIX.ViewModels
 
         public NamespaceViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
         {
-            AddDummy();
         }
 
         public override void Loadchildren()

@@ -6,6 +6,8 @@
              xmlns:viewModels="clr-namespace:Refactorizer.VSIX.ViewModels"
              xmlns:vs_shell="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:customControl="clr-namespace:Refactorizer.VSIX.CustomControl"
+             xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
+             xmlns:catalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"  
              Loaded="WindowLoaded"
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
@@ -45,7 +47,8 @@
                             DataType="{x:Type viewModels:ProjectViewItemViewModel}"
                             ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSProjectNode}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
                             </StackPanel>
                         </HierarchicalDataTemplate>
 
@@ -53,7 +56,8 @@
                             DataType="{x:Type viewModels:NamespaceViewItemViewModel}"
                             ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.Namespace}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
                             </StackPanel>
                         </HierarchicalDataTemplate>
 
@@ -61,7 +65,35 @@
                             DataType="{x:Type viewModels:ClassViewItemViewModel}"
                             ItemsSource="{Binding Children}">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSFileNode}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:MethodViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.MethodPublic}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:FieldViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.FieldPublic}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                            </StackPanel>
+                        </HierarchicalDataTemplate>
+
+                        <HierarchicalDataTemplate
+                            DataType="{x:Type viewModels:PropertyViewItemViewModel}"
+                            ItemsSource="{Binding Children}">
+                            <StackPanel Orientation="Horizontal">
+                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.PropertyPublic}" />
+                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.Resources>

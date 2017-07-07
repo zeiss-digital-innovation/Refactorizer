@@ -22,6 +22,5 @@ namespace Refactorizer.VSIX.ViewModels
             OnPropertyChanged(propertyName);
             return true;
         }
-
     }
 }

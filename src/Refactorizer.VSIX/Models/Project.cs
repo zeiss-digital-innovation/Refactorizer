@@ -28,5 +28,7 @@ namespace Refactorizer.VSIX.Models
             ProjectId = projectId;
             Name = name;
         }
+
+        public bool HasChildren => Namespaces.Count > 0;
     }
 }

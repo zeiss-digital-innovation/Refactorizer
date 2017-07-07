@@ -12,5 +12,7 @@ namespace Refactorizer.VSIX.Models
         IModel Parent { get; set; }
 
         ICollection<IModel> References { get; set; }
+
+        bool HasChildren { get; }
     }
 }

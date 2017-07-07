@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Windows.Media;
-using Microsoft.CodeAnalysis;
-using Refactorizer.VSIX.Models;
+﻿using Refactorizer.VSIX.Models;
 using Project = Refactorizer.VSIX.Models.Project;
 
 namespace Refactorizer.VSIX.ViewModels
@@ -11,7 +7,6 @@ namespace Refactorizer.VSIX.ViewModels
     {
         public ProjectViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
         {
-            AddDummy();
         }
 
         public override void Loadchildren()
