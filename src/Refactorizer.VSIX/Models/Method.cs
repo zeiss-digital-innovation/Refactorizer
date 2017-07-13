@@ -25,7 +25,9 @@ namespace Refactorizer.VSIX.Models
 
         public string ReturnType { get; set; }
 
-        public string Signature { get; set; }
+        public string Parameter { get; set; }
+
+        public string Signature => ReturnType == null ? "" : $"{ReturnType} " + $"{Name} (${Parameter}";
 
         public bool HasChildren => false;
 

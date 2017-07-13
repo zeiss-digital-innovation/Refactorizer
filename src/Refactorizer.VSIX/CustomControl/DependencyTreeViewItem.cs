@@ -123,6 +123,7 @@ namespace Refactorizer.VSIX.CustomControl
             _host.OutReferencesAdornerLayer.Remove(adorner);
         }
 
+        // TODO: Avoid duplicate adordner, add weight to increate line width if mutliple references between the same dependencies
         private BezierCurveAdorner CreateOutRefrenceArdoner(DependencyTreeViewItem referenceTreeViewItem, IModel relatedModel,
             IModel reference)
         {

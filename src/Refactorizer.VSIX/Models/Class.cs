@@ -5,15 +5,14 @@ namespace Refactorizer.VSIX.Models
 {
     internal class Class : IModel
     {
-        public Class(Guid id, string fullName, string name, IModel parent)
+        public Class(Guid id, string name, IModel parent)
         {
             Id = id;
-            FullName = fullName;
             Name = name;
             Parent = parent;
         }
 
-        public string FullName { get; }
+        public string FullName => ClassnameFormater.FullName((Parent as Namespace)?.Name, Name);
 
         public string Name { get; set; }
 
@@ -35,5 +34,7 @@ namespace Refactorizer.VSIX.Models
         public List<Field> Fields { get; set; } = new List<Field>();
 
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Public;
+
+        public List<Namespace> ReferencedNamespaces { get; set; } = new List<Namespace>();
     }
 }

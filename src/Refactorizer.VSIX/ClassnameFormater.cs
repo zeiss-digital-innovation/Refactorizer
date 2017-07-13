@@ -2,9 +2,9 @@ namespace Refactorizer.VSIX
 {
     internal class ClassnameFormater
     {
-        public string FormatClassFullName(string namesapceName, string className)
+        public static string FullName(string namespaceName, string className)
         {
-            return $"{namesapceName}.{className}";
+            return $"{namespaceName}.{className}";
         }
     }
 }
