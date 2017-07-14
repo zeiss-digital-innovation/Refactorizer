@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.ServiceModel.Configuration;
 using System.Threading.Tasks;
 using EnvDTE;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
 using Microsoft.VisualStudio.Shell.Interop;
+using Refactorizer.VSIX.Analyser;
 using Refactorizer.VSIX.Exception;
 using Refactorizer.VSIX.Models;
 using MSDocument = Microsoft.CodeAnalysis.Document;
@@ -20,24 +20,25 @@ using Solution = Refactorizer.VSIX.Models.Solution;
 
 namespace Refactorizer.VSIX
 {
-    // TODO: Split in multiple classes
+    // TODO: Split in multiple classes using CSharpSyntaxWalker
     internal class CodeAnalyser
     {
-        private Dictionary<Method, List<string>> _methodToClassMapping = new Dictionary<Method, List<string>>();
-
-        private Dictionary<Method, List<string>> _methodToMethodMapping = new Dictionary<Method, List<string>>();
-
-        private Dictionary<Property, string> _propertyToTypeMapping = new Dictionary<Property, string>();
-
-        private Dictionary<Field, string> _fieldToTypeMapping = new Dictionary<Field, string>();
-
         private Dictionary<Class, List<string>> _classToClassMapping = new Dictionary<Class, List<string>>();
 
         private Dictionary<Class, List<string>> _classToNamespaceMapping = new Dictionary<Class, List<string>>();
 
-        private Dictionary<Namespace, List<string>> _namespaceToNamespaceMapping = new Dictionary<Namespace, List<string>>();
+        private Dictionary<Field, string> _fieldToTypeMapping = new Dictionary<Field, string>();
+        private Dictionary<Method, List<string>> _methodToClassMapping = new Dictionary<Method, List<string>>();
 
-        private Dictionary<Project, List<ProjectId>> _projectToProjectMapping = new Dictionary<Project, List<ProjectId>>();
+        private Dictionary<Method, List<string>> _methodToMethodMapping = new Dictionary<Method, List<string>>();
+
+        private Dictionary<Namespace, List<string>> _namespaceToNamespaceMapping =
+            new Dictionary<Namespace, List<string>>();
+
+        private Dictionary<Project, List<ProjectId>> _projectToProjectMapping =
+            new Dictionary<Project, List<ProjectId>>();
+
+        private Dictionary<Property, string> _propertyToTypeMapping = new Dictionary<Property, string>();
 
         private async Task<MSSolution> GetCurrentSolution()
         {
@@ -58,15 +59,7 @@ namespace Refactorizer.VSIX
         {
             var solution = new Solution();
 
-            // Reset temp storages
-            _classToClassMapping = new Dictionary<Class, List<string>>();
-            _classToNamespaceMapping = new Dictionary<Class, List<string>>();
-            _namespaceToNamespaceMapping = new Dictionary<Namespace, List<string>>();
-            _projectToProjectMapping = new Dictionary<Project, List<ProjectId>>();
-            _fieldToTypeMapping = new Dictionary<Field, string>();
-            _propertyToTypeMapping = new Dictionary<Property, string>();
-            _methodToMethodMapping = new Dictionary<Method, List<string>>();
-            _methodToClassMapping = new Dictionary<Method, List<string>>();
+            ResetTmpStorage();
 
             // TODO: Handle all parallel to improve performance
             foreach (var msProject in (await GetCurrentSolution()).Projects)
@@ -79,6 +72,13 @@ namespace Refactorizer.VSIX
                 solution.Projects.Add(project);
             }
 
+            MapReferences(solution);
+
+            return solution;
+        }
+
+        private void MapReferences(Solution solution)
+        {
             // TODO: Handle all parallel after code above to improve performance
             AddReferencesBetweenProjects(solution);
             AddReferencesBetweenNamespaces(solution);
@@ -87,8 +87,18 @@ namespace Refactorizer.VSIX
             AddReferencesBetweenFields();
             AddReferencesBetweenMethodsAndClasses();
             AddReferencesBetweenMethods();
+        }
 
-            return solution;
+        private void ResetTmpStorage()
+        {
+            _classToClassMapping = new Dictionary<Class, List<string>>();
+            _classToNamespaceMapping = new Dictionary<Class, List<string>>();
+            _namespaceToNamespaceMapping = new Dictionary<Namespace, List<string>>();
+            _projectToProjectMapping = new Dictionary<Project, List<ProjectId>>();
+            _fieldToTypeMapping = new Dictionary<Field, string>();
+            _propertyToTypeMapping = new Dictionary<Property, string>();
+            _methodToMethodMapping = new Dictionary<Method, List<string>>();
+            _methodToClassMapping = new Dictionary<Method, List<string>>();
         }
 
         private void AddReferencesBetweenProjects(Solution solution)
@@ -133,7 +143,8 @@ namespace Refactorizer.VSIX
                 var references = keyValue.Value;
                 foreach (var reference in references)
                 {
-                    var namespaceAsStringOfClass = _classToNamespaceMapping.FirstOrDefault(x => x.Key.Id.Equals(@class.Id)).Value;
+                    var namespaceAsStringOfClass = _classToNamespaceMapping
+                        .FirstOrDefault(x => x.Key.Id.Equals(@class.Id)).Value;
 
                     var namespacesOfClass = solution.Projects.SelectMany(x => x.Namespaces).ToList()
                         .Where(x => namespaceAsStringOfClass.Contains(x.Name)).ToList();
@@ -175,19 +186,75 @@ namespace Refactorizer.VSIX
 
                 if (typeReference == null)
                     continue;
-                
+
                 field.References.Add(typeReference);
             }
         }
 
         private void AddReferencesBetweenMethods()
         {
-            throw new NotImplementedException();
+            foreach (var keyValue in _methodToMethodMapping)
+            {
+                var method = keyValue.Key;
+                var referencedMethods = keyValue.Value;
+
+                var parentClass = method.Parent as Class;
+                var parentNamespace = parentClass?.Parent as Namespace;
+                if (parentNamespace == null)
+                    continue;
+
+                foreach (var fullMethodName in referencedMethods)
+                {
+                    var split = fullMethodName.Split('.');
+                    var methodName = split.Last();
+                    var className = split[split.Length - 1];
+                    var namespaceName = string.Join(".", split.Take(split.Length - 2).ToList());
+                    var ns = parentNamespace;
+                    if (!parentNamespace.Name.Equals(namespaceName))
+                        ns = GetNamespaceByName(parentNamespace, namespaceName);
+                    var @class = GetClassFromNamespaceByName(ns, className);
+                    var classMethod = @class.Methods.FirstOrDefault(x => x.Name.Equals(methodName));
+                    if (classMethod != null)
+                        method.References.Add(classMethod);
+                }
+            }
         }
 
         private void AddReferencesBetweenMethodsAndClasses()
         {
-            throw new NotImplementedException();
+            foreach (var keyValue in _methodToClassMapping)
+            {
+                var method = keyValue.Key;
+                var referencedClasses = keyValue.Value;
+
+                var parentClass = method.Parent as Class;
+                var parentNamespace = parentClass?.Parent as Namespace;
+                if (parentNamespace == null)
+                    continue;
+
+                foreach (var fullClassName in referencedClasses)
+                {
+                    var split = fullClassName.Split('.');
+                    var className = split.Last();
+                    var namespaceName = string.Join(".", split.Take(split.Length - 1).ToList());
+                    // Select the correct namespace
+                    var ns = parentNamespace;
+                    if (!parentNamespace.Name.Equals(namespaceName))
+                        ns = GetNamespaceByName(parentNamespace, namespaceName);
+                    var @class = GetClassFromNamespaceByName(ns, className);
+                    method.References.Add(@class);
+                }
+            }
+        }
+
+        private static Class GetClassFromNamespaceByName(Namespace ns, string className)
+        {
+            return ns.Classes.FirstOrDefault(nsClass => nsClass.Name.Equals(className));
+        }
+
+        private static Namespace GetNamespaceByName(Namespace parentNamespace, string namespaceName)
+        {
+            return parentNamespace.References.OfType<Namespace>().FirstOrDefault(refNs => refNs.Name.Equals(namespaceName));
         }
 
         private static Class GetClassByType(Class classThatContainsProperty, string type)
@@ -208,23 +275,20 @@ namespace Refactorizer.VSIX
         private async Task AddNamespaces(Project project, MSDocument msDocument)
         {
             // We use the syntax tree to find all declareded classes inside this dockument
-            var documentSyntaxRoot = await msDocument.GetSyntaxRootAsync();
+            var syntaxRoot = await msDocument.GetSyntaxRootAsync();
 
             // We need the semanic model to query some informations of nodes
-            var model = await msDocument.GetSemanticModelAsync();
+            var semanticModel = await msDocument.GetSemanticModelAsync();
 
-            var referencedNamespaces = GetRelatedNamespaces(documentSyntaxRoot, model);
+            var referencedNamespaces = GetRelatedNamespaces(syntaxRoot, semanticModel);
 
             // Use the syntax tree to get all namepace definitions inside
-            var namespaces = documentSyntaxRoot.DescendantNodesAndSelf().OfType<NamespaceDeclarationSyntax>();
+            var namespaces = syntaxRoot.DescendantNodesAndSelf().OfType<NamespaceDeclarationSyntax>();
 
             foreach (var namespaceDeclarationSyntax in namespaces)
             {
-                // Get the syntrax tree based on namespace
-                var namespaceSyntaxRoot = await namespaceDeclarationSyntax.SyntaxTree.GetRootAsync();
-
                 // Get the symbol for namespace from model to get full name of namespace
-                var namespaceSymbol = model.GetDeclaredSymbol(namespaceDeclarationSyntax);
+                var namespaceSymbol = semanticModel.GetDeclaredSymbol(namespaceDeclarationSyntax);
 
                 var namespaceName = namespaceSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
 
@@ -243,37 +307,39 @@ namespace Refactorizer.VSIX
                 }
 
                 // Use the syntax tree to get all classes declarations inside
-                var classes = namespaceSyntaxRoot.DescendantNodes().OfType<ClassDeclarationSyntax>();
+                var classes = namespaceDeclarationSyntax.DescendantNodes().OfType<ClassDeclarationSyntax>();
 
                 // Handle each class declaration inside the namespace
                 foreach (var classDeclaration in classes)
                 {
-                    var symbol = model.GetDeclaredSymbol(classDeclaration);
+                    var symbol = semanticModel.GetDeclaredSymbol(classDeclaration);
                     var baseList = classDeclaration.BaseList;
                     var root = await classDeclaration.SyntaxTree.GetRootAsync();
                     var referencedClasses = GetClassReferences(root, baseList);
 
-                    CreateClass(root, symbol, @namespace, referencedClasses, referencedNamespaces);
+                    CreateClass(classDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
+                        semanticModel);
                 }
 
                 // Use the syntax tree to get all interface declations inside
-                var interfaces = namespaceSyntaxRoot.DescendantNodes().OfType<InterfaceDeclarationSyntax>();
+                var interfaces = namespaceDeclarationSyntax.DescendantNodes().OfType<InterfaceDeclarationSyntax>();
 
                 foreach (var interfaceDeclaration in interfaces)
                 {
-                    var symbol = model.GetDeclaredSymbol(interfaceDeclaration);
+                    var symbol = semanticModel.GetDeclaredSymbol(interfaceDeclaration);
                     var baseList = interfaceDeclaration.BaseList;
                     var root = await interfaceDeclaration.SyntaxTree.GetRootAsync();
                     var referencedClasses = GetClassReferences(root, baseList);
 
-                    CreateClass(root, symbol, @namespace, referencedClasses, referencedNamespaces);
+                    CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
+                        semanticModel);
                 }
             }
         }
 
-        private List<string> GetRelatedNamespaces(SyntaxNode syntaxTree, SemanticModel model)
+        private List<string> GetRelatedNamespaces(SyntaxNode syntaxNode, SemanticModel model)
         {
-            var usings = syntaxTree.DescendantNodes().OfType<UsingDirectiveSyntax>();
+            var usings = syntaxNode.DescendantNodes().OfType<UsingDirectiveSyntax>();
 
             // Collection of related namespace, we use to find the correct reference
             var relatedNamespaces = new List<string>();
@@ -291,7 +357,8 @@ namespace Refactorizer.VSIX
             return relatedNamespaces;
         }
 
-        private void CreateClass(SyntaxNode root, ISymbol symbol, Namespace @namespace, List<string> referencedClasses, List<string> referencedNamespaces)
+        private void CreateClass(SyntaxNode syntaxNode, ISymbol symbol, Namespace @namespace,
+            List<string> referencedClasses, List<string> referencedNamespaces, SemanticModel model)
         {
             var className = symbol.Name;
 
@@ -301,55 +368,64 @@ namespace Refactorizer.VSIX
 
             @namespace.Classes.Add(@class);
 
-            AddFields(root, @class);
-            AddProperties(root, @class);
-            AddMethods(root, @class);
+            AddFields(syntaxNode, @class);
+            AddProperties(syntaxNode, @class);
+            AddMethods(syntaxNode, @class, model);
         }
 
         // TODO: Handle generics https://stackoverflow.com/questions/43210137/how-to-check-if-method-parameter-type-return-type-is-generic-in-roslyn
-        private void AddMethods(SyntaxNode syntaxTree, Class @class)
+        private void AddMethods(SyntaxNode syntaxNode, Class @class, SemanticModel model)
         {
             // Constructors
-            var constructorDeclarations = syntaxTree.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
+            var constructorDeclarations = syntaxNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
             foreach (var constructorDeclaration in constructorDeclarations)
             {
                 var methodName = constructorDeclaration.Identifier.ToString();
                 var parameterDeclarations = constructorDeclaration.ParameterList.Parameters;
 
-                CreateMethod($"{methodName}", parameterDeclarations, @class);
+                CreateMethod($"{methodName}", constructorDeclaration, parameterDeclarations, @class, model);
             }
 
             // Methods
-            var methodDeclarations = syntaxTree.DescendantNodes().OfType<MethodDeclarationSyntax>();
+            var methodDeclarations = syntaxNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
             foreach (var methodDeclartion in methodDeclarations)
             {
                 var methodName = methodDeclartion.Identifier.ToString();
                 var returnType = methodDeclartion.ReturnType.ToString();
                 var parameterDeclarations = methodDeclartion.ParameterList.Parameters;
 
-                CreateMethod($"{methodName}", parameterDeclarations, @class, returnType);
+                CreateMethod($"{methodName}", methodDeclartion, parameterDeclarations, @class, model, returnType);
             }
         }
 
-        private void CreateMethod(string methodName, SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, string returnType = null)
+        private void CreateMethod(string methodName, SyntaxNode syntaxNode,
+            SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, SemanticModel model,
+            string returnType = null)
         {
-            var methodToClassReferences = new List<string>();
+            var walker = new MethodSyntaxWalker(model);
+            walker.Visit(syntaxNode);
+
             var parametersAsListOfStrings = new List<string>();
             foreach (var parameter in parameterDeclarations)
             {
                 var parameterName = parameter.Identifier.ToString();
                 var parameterType = parameter.Type.ToString();
-                methodToClassReferences.Add(parameterType);
+                walker.ClassReferences.Add(parameterType);
 
                 parametersAsListOfStrings.Add($"{parameterType} {parameterName}");
             }
 
-            var method = new Method(Guid.NewGuid(), methodName, @class) {Parameter = string.Join(", ", parametersAsListOfStrings)};
+            var method =
+                new Method(Guid.NewGuid(), methodName, @class)
+                {
+                    Parameter = string.Join(", ", parametersAsListOfStrings)
+                };
             if (returnType != null)
                 method.ReturnType = returnType;
 
             @class.Methods.Add(method);
-            _methodToClassMapping.Add(method, methodToClassReferences);
+            _methodToClassMapping.Add(method, walker.ClassReferences);
+            _methodToMethodMapping.Add(method, walker.MethodReferences);
         }
 
         private void AddFields(SyntaxNode root, Class @class)
@@ -391,7 +467,7 @@ namespace Refactorizer.VSIX
 
                 if (string.IsNullOrEmpty(name))
                     continue;
-                
+
                 if (allReferences.Contains(name))
                     continue;
 

@@ -51,6 +51,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Analyser\MethodSyntaxWalker.cs" />
     <Compile Include="ClassnameFormater.cs" />
     <Compile Include="CodeAnalyser.cs" />
     <Compile Include="CustomControl\DependencyTreeView.cs" />
