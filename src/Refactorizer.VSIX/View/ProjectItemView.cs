@@ -1,11 +1,11 @@
 ﻿using Refactorizer.VSIX.Models;
 using Project = Refactorizer.VSIX.Models.Project;
 
-namespace Refactorizer.VSIX.ViewModels
+namespace Refactorizer.VSIX.View
 {
-    class ProjectViewItemViewModel : DependencyTreeViewItemViewModel
+    class ProjectItemView : DependencyTreeItemView
     {
-        public ProjectViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel) : base(parent, relatedModel)
+        public ProjectItemView(DependencyTreeItemView parent, IModel relatedModel) : base(parent, relatedModel)
         {
         }
 
@@ -17,7 +17,7 @@ namespace Refactorizer.VSIX.ViewModels
 
             // Add view model references
             foreach (var ns in project.Namespaces)
-                Children.Add(new NamespaceViewItemViewModel(this, ns));
+                Children.Add(new NamespaceItemView(this, ns));
         }
     }
 }

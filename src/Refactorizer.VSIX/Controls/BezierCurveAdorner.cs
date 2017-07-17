@@ -2,7 +2,7 @@
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace Refactorizer.VSIX.CustomControl
+namespace Refactorizer.VSIX.Controls
 {
     class BezierCurveAdorner : Adorner
 
@@ -15,6 +15,8 @@ namespace Refactorizer.VSIX.CustomControl
             To = to;
         }
 
+        public bool IsSelected { get; set; }
+
         public Point From { get; set; }
 
         public Point ControlOne { get; set; }
@@ -25,7 +27,7 @@ namespace Refactorizer.VSIX.CustomControl
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var pen = new Pen(new SolidColorBrush(Colors.OrangeRed), 1.5);
+            var pen = new Pen(new SolidColorBrush(IsSelected ? Colors.OrangeRed : Colors.White), 1.5);
 
             var pathFigure = new PathFigure();
             pathFigure.StartPoint = From;

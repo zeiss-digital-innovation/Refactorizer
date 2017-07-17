@@ -1,18 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Windows;
+﻿using System.Collections.ObjectModel;
 using Refactorizer.VSIX.Models;
 
-namespace Refactorizer.VSIX.ViewModels
+namespace Refactorizer.VSIX.View
 {
-    public class DependencyTreeViewItemViewModel : NotifyPropertyChanged
+    public class DependencyTreeItemView : NotifyPropertyChanged
     {
-        private readonly DependencyTreeViewItemViewModel _parent;
+        private readonly DependencyTreeItemView _parent;
 
         public IModel RelatedModel { get; }
 
-        private static readonly DependencyTreeViewItemViewModel DummyChild = new DependencyTreeViewItemViewModel();
+        private static readonly DependencyTreeItemView DummyChild = new DependencyTreeItemView();
 
         private bool _isExpanded;
         private bool _isSelected;
@@ -53,13 +50,13 @@ namespace Refactorizer.VSIX.ViewModels
             }
         }
 
-        public ObservableCollection<DependencyTreeViewItemViewModel> Children { get; } = new ObservableCollection<DependencyTreeViewItemViewModel>();
+        public ObservableCollection<DependencyTreeItemView> Children { get; } = new ObservableCollection<DependencyTreeItemView>();
 
         // public ObservableCollection<DependencyTreeViewItemViewModel> References { get; } = new ObservableCollection<DependencyTreeViewItemViewModel>();
 
         public bool HasDummyChild => this.Children.Count == 1 && this.Children[0] == DummyChild;
 
-        protected DependencyTreeViewItemViewModel(DependencyTreeViewItemViewModel parent, IModel relatedModel)
+        protected DependencyTreeItemView(DependencyTreeItemView parent, IModel relatedModel)
         {
             _parent = parent;
             RelatedModel = relatedModel;
@@ -68,7 +65,7 @@ namespace Refactorizer.VSIX.ViewModels
                 AddDummy();
         }
 
-        private DependencyTreeViewItemViewModel()
+        private DependencyTreeItemView()
         {
         }
 

@@ -54,9 +54,10 @@
     <Compile Include="Analyser\MethodSyntaxWalker.cs" />
     <Compile Include="ClassnameFormater.cs" />
     <Compile Include="CodeAnalyser.cs" />
-    <Compile Include="CustomControl\DependencyTreeView.cs" />
-    <Compile Include="CustomControl\DependencyTreeViewItem.cs" />
-    <Compile Include="CustomControl\BezierCurveAdorner.cs" />
+    <Compile Include="Converter\BrushColorConverter.cs" />
+    <Compile Include="Controls\DependencyTreeView.cs" />
+    <Compile Include="Controls\DependencyTreeViewItem.cs" />
+    <Compile Include="Controls\BezierCurveAdorner.cs" />
     <Compile Include="MainWindow.cs" />
     <Compile Include="MainWindowCommand.cs" />
     <Compile Include="MainWindowControl.xaml.cs">
@@ -74,18 +75,18 @@
     <Compile Include="Models\Solution.cs" />
     <Compile Include="Models\AccessLevel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Usercontrols\SolutionTree.xaml.cs">
+    <Compile Include="Controls\SolutionTree.xaml.cs">
       <DependentUpon>SolutionTree.xaml</DependentUpon>
     </Compile>
-    <Compile Include="ViewModels\FieldViewItemViewModel.cs" />
-    <Compile Include="ViewModels\MethodViewItemViewModel.cs" />
-    <Compile Include="ViewModels\NotifyPropertyChanged.cs" />
-    <Compile Include="ViewModels\DependencyTreeViewItemViewModel.cs" />
-    <Compile Include="ViewModels\ClassViewItemViewModel.cs" />
-    <Compile Include="ViewModels\NamespaceViewItemViewModel.cs" />
-    <Compile Include="ViewModels\ProjectViewItemViewModel.cs" />
-    <Compile Include="ViewModels\PropertyViewItemViewModel.cs" />
-    <Compile Include="ViewModels\SolutionViewModel.cs" />
+    <Compile Include="View\FieldItemView.cs" />
+    <Compile Include="View\MethodItemView.cs" />
+    <Compile Include="View\NotifyPropertyChanged.cs" />
+    <Compile Include="View\DependencyTreeItemView.cs" />
+    <Compile Include="View\ClassItemView.cs" />
+    <Compile Include="View\NamespaceItemView.cs" />
+    <Compile Include="View\ProjectItemView.cs" />
+    <Compile Include="View\PropertyItemView.cs" />
+    <Compile Include="View\SolutionViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -104,7 +105,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="Usercontrols\SolutionTree.xaml">
+    <Page Include="Controls\SolutionTree.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
