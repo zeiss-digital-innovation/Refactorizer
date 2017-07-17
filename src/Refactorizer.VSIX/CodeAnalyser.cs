@@ -83,10 +83,10 @@ namespace Refactorizer.VSIX
             AddReferencesBetweenProjects(solution);
             AddReferencesBetweenNamespaces(solution);
             AddReferencesBetweenClasses(solution);
-            AddReferencesBetweenProperties();
-            AddReferencesBetweenFields();
-            AddReferencesBetweenMethodsAndClasses();
-            AddReferencesBetweenMethods();
+            AddReferencesBetweenProperties(solution);
+            AddReferencesBetweenFields(solution);
+            AddReferencesBetweenMethodsAndClasses(solution);
+            AddReferencesBetweenMethods(solution);
         }
 
         private void ResetTmpStorage()
@@ -141,16 +141,9 @@ namespace Refactorizer.VSIX
             {
                 var @class = keyValue.Key;
                 var references = keyValue.Value;
-                foreach (var reference in references)
+                foreach (var referenceFullName in references)
                 {
-                    var namespaceAsStringOfClass = _classToNamespaceMapping
-                        .FirstOrDefault(x => x.Key.Id.Equals(@class.Id)).Value;
-
-                    var namespacesOfClass = solution.Projects.SelectMany(x => x.Namespaces).ToList()
-                        .Where(x => namespaceAsStringOfClass.Contains(x.Name)).ToList();
-
-                    var classReference = namespacesOfClass.SelectMany(x => x.Classes).ToList()
-                        .FirstOrDefault(x => x.Name.Equals(reference));
+                    var classReference = GetClassByFullName(solution, referenceFullName);
 
                     if (classReference != null)
                         @class.References.Add(classReference);
@@ -158,40 +151,39 @@ namespace Refactorizer.VSIX
             }
         }
 
-        private void AddReferencesBetweenProperties()
+        private void AddReferencesBetweenProperties(Solution solution)
         {
             foreach (var keyValue in _propertyToTypeMapping)
             {
                 var property = keyValue.Key;
                 var type = keyValue.Value;
 
-                var typeReference = GetClassByType(property.Parent as Class, type);
+                var @class = GetClassByName(solution, type);
 
-                if (typeReference == null)
+                if (@class == null)
                     continue;
 
-                property.References.Add(typeReference);
+                property.References.Add(@class);
             }
         }
 
-
-        private void AddReferencesBetweenFields()
+        private void AddReferencesBetweenFields(Solution solution)
         {
             foreach (var keyValue in _fieldToTypeMapping)
             {
                 var field = keyValue.Key;
                 var type = keyValue.Value;
 
-                var typeReference = GetClassByType(field.Parent as Class, type);
+                var @class = GetClassByFullName(solution, type);
 
-                if (typeReference == null)
+                if (@class == null)
                     continue;
 
-                field.References.Add(typeReference);
+                field.References.Add(@class);
             }
         }
 
-        private void AddReferencesBetweenMethods()
+        private void AddReferencesBetweenMethods(Solution solution)
         {
             foreach (var keyValue in _methodToMethodMapping)
             {
@@ -206,21 +198,31 @@ namespace Refactorizer.VSIX
                 foreach (var fullMethodName in referencedMethods)
                 {
                     var split = fullMethodName.Split('.');
+                    if (split.Length < 2)
+                        continue;
+
                     var methodName = split.Last();
                     var className = split[split.Length - 1];
                     var namespaceName = string.Join(".", split.Take(split.Length - 2).ToList());
                     var ns = parentNamespace;
                     if (!parentNamespace.Name.Equals(namespaceName))
                         ns = GetNamespaceByName(parentNamespace, namespaceName);
+
+                    if (ns == null)
+                        continue;
+
                     var @class = GetClassFromNamespaceByName(ns, className);
-                    var classMethod = @class.Methods.FirstOrDefault(x => x.Name.Equals(methodName));
-                    if (classMethod != null)
-                        method.References.Add(classMethod);
+                    if (@class?.Methods != null && @class.Methods.Count > 0)
+                    {
+                        var classMethod = @class.Methods.FirstOrDefault(x => x.Name.Equals(methodName));
+                        if (classMethod != null)
+                            method.References.Add(classMethod);
+                    }
                 }
             }
         }
 
-        private void AddReferencesBetweenMethodsAndClasses()
+        private void AddReferencesBetweenMethodsAndClasses(Solution solution)
         {
             foreach (var keyValue in _methodToClassMapping)
             {
@@ -234,17 +236,18 @@ namespace Refactorizer.VSIX
 
                 foreach (var fullClassName in referencedClasses)
                 {
-                    var split = fullClassName.Split('.');
-                    var className = split.Last();
-                    var namespaceName = string.Join(".", split.Take(split.Length - 1).ToList());
-                    // Select the correct namespace
-                    var ns = parentNamespace;
-                    if (!parentNamespace.Name.Equals(namespaceName))
-                        ns = GetNamespaceByName(parentNamespace, namespaceName);
-                    var @class = GetClassFromNamespaceByName(ns, className);
-                    method.References.Add(@class);
+                    var @class = GetClassByFullName(solution, fullClassName);
+                    if (@class != null)
+                        method.References.Add(@class);
                 }
             }
+        }
+
+        private static Class GetClassByFullName(Solution solution, string type)
+        {
+            var typeReference = solution.Projects.SelectMany(x => x.Namespaces).ToList().SelectMany(x => x.Classes)
+                .ToList().FirstOrDefault(x => x.FullName.Equals(type));
+            return typeReference;
         }
 
         private static Class GetClassFromNamespaceByName(Namespace ns, string className)
@@ -257,11 +260,12 @@ namespace Refactorizer.VSIX
             return parentNamespace.References.OfType<Namespace>().FirstOrDefault(refNs => refNs.Name.Equals(namespaceName));
         }
 
-        private static Class GetClassByType(Class classThatContainsProperty, string type)
+        private static Class GetClassByName(Solution solution, string name)
         {
-            var typeReference = classThatContainsProperty?.ReferencedNamespaces.SelectMany(ns => ns.Classes)
-                .ToList()
-                .FirstOrDefault(@class => @class.Name.Equals(type));
+            var typeReference = solution.Projects.SelectMany(x => x.Namespaces)
+                .ToList().SelectMany(x => x.Classes)
+                .ToList().FirstOrDefault(@class => @class.Name.Equals(name));
+
             return typeReference;
         }
 
@@ -314,8 +318,7 @@ namespace Refactorizer.VSIX
                 {
                     var symbol = semanticModel.GetDeclaredSymbol(classDeclaration);
                     var baseList = classDeclaration.BaseList;
-                    var root = await classDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetClassReferences(root, baseList);
+                    var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(classDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
                         semanticModel);
@@ -328,8 +331,7 @@ namespace Refactorizer.VSIX
                 {
                     var symbol = semanticModel.GetDeclaredSymbol(interfaceDeclaration);
                     var baseList = interfaceDeclaration.BaseList;
-                    var root = await interfaceDeclaration.SyntaxTree.GetRootAsync();
-                    var referencedClasses = GetClassReferences(root, baseList);
+                    var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
                         semanticModel);
@@ -368,8 +370,8 @@ namespace Refactorizer.VSIX
 
             @namespace.Classes.Add(@class);
 
-            AddFields(syntaxNode, @class);
-            AddProperties(syntaxNode, @class);
+            AddFields(syntaxNode, @class, model);
+            AddProperties(syntaxNode, @class, model);
             AddMethods(syntaxNode, @class, model);
         }
 
@@ -428,15 +430,15 @@ namespace Refactorizer.VSIX
             _methodToMethodMapping.Add(method, walker.MethodReferences);
         }
 
-        private void AddFields(SyntaxNode root, Class @class)
+        private void AddFields(SyntaxNode root, Class @class, SemanticModel model)
         {
             var allReferences = new List<string>();
 
             var fieldDeclarations = root.DescendantNodes().OfType<FieldDeclarationSyntax>();
             foreach (var fieldDeclarationSyntax in fieldDeclarations)
             {
-                var identifierNameSyntax = fieldDeclarationSyntax.Declaration.Type as IdentifierNameSyntax;
-                var type = identifierNameSyntax?.Identifier.ToString();
+                var type = model.GetSymbolInfo(fieldDeclarationSyntax.Declaration.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                var typeWithoutNs = type.Split('.').Last();
                 var name = fieldDeclarationSyntax.Declaration.Variables.ToString();
                 if (string.IsNullOrEmpty(type))
                     continue;
@@ -444,7 +446,7 @@ namespace Refactorizer.VSIX
                 if (allReferences.Contains(type))
                     continue;
 
-                var field = new Field(Guid.NewGuid(), name, @class, $"{type} {name}");
+                var field = new Field(Guid.NewGuid(), name, @class, $"{typeWithoutNs} {name}");
                 @class.Fields.Add(field);
                 _fieldToTypeMapping.Add(field, type);
 
@@ -454,7 +456,7 @@ namespace Refactorizer.VSIX
             _classToClassMapping[@class] = _classToClassMapping[@class].Union(allReferences).ToList();
         }
 
-        private void AddProperties(SyntaxNode root, Class @class)
+        private void AddProperties(SyntaxNode root, Class @class, SemanticModel model)
         {
             var allReferences = new List<string>();
 
@@ -463,7 +465,8 @@ namespace Refactorizer.VSIX
             {
                 var identifierNameSyntax = propertyDeclarationSyntax.Type as IdentifierNameSyntax;
                 var name = identifierNameSyntax?.Identifier.ToString();
-                var type = propertyDeclarationSyntax.Type.ToString();
+                var type = model.GetSymbolInfo(propertyDeclarationSyntax.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                var typeWithoutNs = type.Split('.').Last();
 
                 if (string.IsNullOrEmpty(name))
                     continue;
@@ -471,7 +474,7 @@ namespace Refactorizer.VSIX
                 if (allReferences.Contains(name))
                     continue;
 
-                var property = new Property(Guid.NewGuid(), name, @class, $"{type} {name}");
+                var property = new Property(Guid.NewGuid(), name, @class, $"{typeWithoutNs} {name}");
                 @class.Properties.Add(property);
                 _propertyToTypeMapping.Add(property, type);
 
@@ -481,7 +484,7 @@ namespace Refactorizer.VSIX
             _classToClassMapping[@class] = _classToClassMapping[@class].Union(allReferences).ToList();
         }
 
-        private List<string> GetClassReferences(SyntaxNode syntaxTree, BaseListSyntax baseList)
+        private List<string> GetReturnType(BaseListSyntax baseList, SemanticModel semanticModel)
         {
             var references = new List<string>();
 
@@ -489,9 +492,8 @@ namespace Refactorizer.VSIX
             if (baseList != null)
             {
                 var baseTypes = baseList.Types.ToList();
-                references.AddRange(from baseType in baseTypes
-                    where baseType != null
-                    select baseType.Type.ToString());
+                references.AddRange(baseTypes.Where(baseType => baseType != null)
+                    .Select(baseType => semanticModel.GetSymbolInfo(baseType.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
             }
 
             return references;

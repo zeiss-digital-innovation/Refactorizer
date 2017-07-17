@@ -55,8 +55,8 @@
     <Compile Include="ClassnameFormater.cs" />
     <Compile Include="CodeAnalyser.cs" />
     <Compile Include="Converter\BrushColorConverter.cs" />
-    <Compile Include="Controls\DependencyTreeView.cs" />
-    <Compile Include="Controls\DependencyTreeViewItem.cs" />
+    <Compile Include="Controls\DependencyTreeControl.cs" />
+    <Compile Include="Controls\DependencyTreeItemControl.cs" />
     <Compile Include="Controls\BezierCurveAdorner.cs" />
     <Compile Include="MainWindow.cs" />
     <Compile Include="MainWindowCommand.cs" />

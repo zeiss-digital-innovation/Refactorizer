@@ -8,9 +8,9 @@ using Refactorizer.VSIX.View;
 
 namespace Refactorizer.VSIX.Controls
 {
-    internal class DependencyTreeViewItem : TreeViewItem
+    internal class DependencyTreeItemControl : TreeViewItem
     {
-        private readonly DependencyTreeView _host;
+        private readonly DependencyTreeControl _host;
 
         private bool _changed;
 
@@ -20,20 +20,20 @@ namespace Refactorizer.VSIX.Controls
 
         private Dictionary<Guid, BezierCurveAdorner> _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
 
-        public List<DependencyTreeViewItem> InReferenceArdoner = new List<DependencyTreeViewItem>();
+        public List<DependencyTreeItemControl> InReferenceArdoner = new List<DependencyTreeItemControl>();
 
-        public DependencyTreeViewItem Root { get; set; }
+        public DependencyTreeItemControl Root { get; set; }
 
-        public List<DependencyTreeViewItem> Childrens { get; set; }
+        public List<DependencyTreeItemControl> Childrens { get; set; }
 
-        public DependencyTreeViewItem(DependencyTreeView host)
+        public DependencyTreeItemControl(DependencyTreeControl host)
         {
             _host = host;
             DataContextChanged += TreeCanvasItemDataContextChanged;
             BindEvents(this);
         }
 
-        private void BindEvents(DependencyTreeViewItem view)
+        private void BindEvents(DependencyTreeItemControl view)
         {
             view.Expanded += TreeViewItemExpanded;
             view.Expanded -= TreeViewItemExpanded;
@@ -66,7 +66,7 @@ namespace Refactorizer.VSIX.Controls
         /// <returns></returns>
         protected override DependencyObject GetContainerForItemOverride()
         {
-            return new DependencyTreeViewItem(_host);
+            return new DependencyTreeItemControl(_host);
         }
 
         private void TreeCanvasItemDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
@@ -166,7 +166,7 @@ namespace Refactorizer.VSIX.Controls
         }
 
         // TODO: Avoid duplicate adordner, add weight to increate line width if mutliple references between the same dependencies
-        private void CreateOutRefrenceArdoner(DependencyTreeViewItem referenceTreeViewItem, IModel relatedModel,
+        private void CreateOutRefrenceArdoner(DependencyTreeItemControl referenceTreeItemControl, IModel relatedModel,
             IModel reference)
         {
             BezierCurveAdorner adorner;
@@ -175,7 +175,7 @@ namespace Refactorizer.VSIX.Controls
             var from = new Point(0, 0);
             var controlOne = new Point(0, 0);
             var controlTwo = new Point(0, 0);
-            var to = referenceTreeViewItem.TranslatePoint(new Point(0, 0), this);
+            var to = referenceTreeItemControl.TranslatePoint(new Point(0, 0), this);
 
             from.Y += yOffset;
             to.Y = from.Y > to.Y ? to.Y + yOffset : to.Y - yOffset;
@@ -205,8 +205,8 @@ namespace Refactorizer.VSIX.Controls
                 //}
 
                 // Adding this item to InReference of referenced tree view item to draw the backline
-                if (!referenceTreeViewItem.InReferenceArdoner.Contains(this))
-                    referenceTreeViewItem.InReferenceArdoner.Add(this);
+                if (!referenceTreeItemControl.InReferenceArdoner.Contains(this))
+                    referenceTreeItemControl.InReferenceArdoner.Add(this);
 
                 // Only update if some some point has changed
                 if (adorner.From != from ||

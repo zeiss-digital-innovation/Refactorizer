@@ -9,15 +9,15 @@ using Refactorizer.VSIX.View;
 
 namespace Refactorizer.VSIX.Controls
 {
-    internal class DependencyTreeView : TreeView
+    internal class DependencyTreeControl : TreeView
     {
         public static readonly DependencyProperty DependencyTreeViewItemsProperty =
-            DependencyProperty.Register("DependencyTreeViewItems", typeof(ObservableCollection<DependencyTreeViewItem>), typeof(DependencyTreeView),
-                new UIPropertyMetadata(new ObservableCollection<DependencyTreeViewItem>()));
+            DependencyProperty.Register("DependencyTreeViewItems", typeof(ObservableCollection<DependencyTreeItemControl>), typeof(DependencyTreeControl),
+                new UIPropertyMetadata(new ObservableCollection<DependencyTreeItemControl>()));
 
-        private ObservableCollection<DependencyTreeViewItem> DependencyTreeViewItems
+        private ObservableCollection<DependencyTreeItemControl> DependencyTreeViewItems
         {
-            get => (ObservableCollection<DependencyTreeViewItem>)GetValue(DependencyTreeViewItemsProperty);
+            get => (ObservableCollection<DependencyTreeItemControl>)GetValue(DependencyTreeViewItemsProperty);
             set => SetValue(DependencyTreeViewItemsProperty, value);
         }
 
@@ -31,7 +31,7 @@ namespace Refactorizer.VSIX.Controls
             base.OnApplyTemplate();
 
             OutReferencesAdornerLayer = AdornerLayer.GetAdornerLayer(this);
-            DependencyTreeViewItems = new ObservableCollection<DependencyTreeViewItem>();
+            DependencyTreeViewItems = new ObservableCollection<DependencyTreeItemControl>();
         }
 
         /// <summary>
@@ -40,18 +40,18 @@ namespace Refactorizer.VSIX.Controls
         /// <returns></returns>
         protected override DependencyObject GetContainerForItemOverride()
         {
-            return new DependencyTreeViewItem(this);
+            return new DependencyTreeItemControl(this);
         }
 
-        public void AddTreeViewItem(DependencyTreeViewItem newItem)
+        public void AddTreeViewItem(DependencyTreeItemControl newItemControl)
         {
-            DependencyTreeViewItems.Add(newItem);
+            DependencyTreeViewItems.Add(newItemControl);
 
             // Search root
-            var view = newItem.DataContext as 
+            var view = newItemControl.DataContext as DependencyTreeItemView;
         }
 
-        public DependencyTreeViewItem FindReferencedItemOrParent(IModel viewModel)
+        public DependencyTreeItemControl FindReferencedItemOrParent(IModel viewModel)
         {
             var item = FindViewModelByDataModel(viewModel);
 
@@ -69,13 +69,13 @@ namespace Refactorizer.VSIX.Controls
             return item;
         }
 
-        public List<DependencyTreeViewItem> FindLastExpandedDependencyTreeViewItems(DependencyTreeViewItem root)
+        public List<DependencyTreeItemControl> FindLastExpandedDependencyTreeViewItems(DependencyTreeItemControl root)
         {
             var viewModel = root.DataContext as DependencyTreeItemView;
             if (viewModel == null)
                 return null;
 
-            var tmp = new List<DependencyTreeViewItem>();
+            var tmp = new List<DependencyTreeItemControl>();
 
             foreach (var childViewModel in viewModel.Children)
             {
@@ -94,7 +94,7 @@ namespace Refactorizer.VSIX.Controls
             return tmp;
         }
 
-        public DependencyTreeViewItem FindViewItemByViewModel(DependencyTreeItemView itemViewModel)
+        public DependencyTreeItemControl FindViewItemByViewModel(DependencyTreeItemView itemViewModel)
         {
             foreach (var viewItem in DependencyTreeViewItems)
             {
@@ -109,7 +109,7 @@ namespace Refactorizer.VSIX.Controls
             return null;
         }
 
-        public DependencyTreeViewItem FindViewModelByDataModel(IModel dataModel)
+        public DependencyTreeItemControl FindViewModelByDataModel(IModel dataModel)
         {
             foreach (var dependencyTreeViewItem in DependencyTreeViewItems)
             {
@@ -126,9 +126,9 @@ namespace Refactorizer.VSIX.Controls
             return null;
         }
 
-        public bool Contains(DependencyTreeViewItem dependencyTreeViewItem)
+        public bool Contains(DependencyTreeItemControl dependencyTreeItemControl)
         {
-            return DependencyTreeViewItems.Contains(dependencyTreeViewItem);
+            return DependencyTreeViewItems.Contains(dependencyTreeItemControl);
         }
     }
 }

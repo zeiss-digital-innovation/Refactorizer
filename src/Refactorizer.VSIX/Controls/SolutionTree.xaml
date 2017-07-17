@@ -14,7 +14,7 @@
     <Grid Background="Transparent">
         <Grid x:Name="ProgressSuccess" Margin="100 20 100 20">
             <AdornerDecorator>
-                <controls:DependencyTreeView ItemsSource="{Binding Projects}" 
+                <controls:DependencyTreeControl ItemsSource="{Binding Projects}" 
                       x:Name="Solution"
                       Background="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowBackgroundBrushKey}}" 
                       BorderBrush="Transparent">
@@ -97,7 +97,7 @@
                             </StackPanel>
                         </HierarchicalDataTemplate>
                     </TreeView.Resources>
-                </controls:DependencyTreeView>
+                </controls:DependencyTreeControl>
             </AdornerDecorator>
         </Grid>
         <Grid Margin="20" Width="200" Height="20" x:Name="ProgessBarWrapper">
