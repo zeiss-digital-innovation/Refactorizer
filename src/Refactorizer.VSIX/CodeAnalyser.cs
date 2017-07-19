@@ -28,6 +28,7 @@ namespace Refactorizer.VSIX
         private Dictionary<Class, List<string>> _classToNamespaceMapping = new Dictionary<Class, List<string>>();
 
         private Dictionary<Field, string> _fieldToTypeMapping = new Dictionary<Field, string>();
+
         private Dictionary<Method, List<string>> _methodToClassMapping = new Dictionary<Method, List<string>>();
 
         private Dictionary<Method, List<string>> _methodToMethodMapping = new Dictionary<Method, List<string>>();
@@ -158,7 +159,7 @@ namespace Refactorizer.VSIX
                 var property = keyValue.Key;
                 var type = keyValue.Value;
 
-                var @class = GetClassByName(solution, type);
+                var @class = GetClassByFullName(solution, type);
 
                 if (@class == null)
                     continue;
@@ -466,7 +467,7 @@ namespace Refactorizer.VSIX
             {
                 var identifierNameSyntax = propertyDeclarationSyntax.Type as IdentifierNameSyntax;
                 var name = identifierNameSyntax?.Identifier.ToString();
-                var type = model.GetSymbolInfo(propertyDeclarationSyntax.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                var type = model.GetSymbolInfo(propertyDeclarationSyntax.Type).Symbol.ToDisplayString();
                 var typeWithoutNs = type.Split('.').Last();
 
                 if (string.IsNullOrEmpty(name))
