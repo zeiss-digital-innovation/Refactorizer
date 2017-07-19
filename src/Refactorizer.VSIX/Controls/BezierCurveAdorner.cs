@@ -17,6 +17,7 @@ namespace Refactorizer.VSIX.Controls
 
         public bool IsSelected { get; set; }
 
+
         public Point From { get; set; }
 
         public Point ControlOne { get; set; }
@@ -27,7 +28,9 @@ namespace Refactorizer.VSIX.Controls
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var pen = new Pen(new SolidColorBrush(IsSelected ? Colors.OrangeRed : Colors.White), 1.5);
+            var color = IsSelected ? Colors.OrangeRed : Colors.White;
+            var brush = new SolidColorBrush(color) {Opacity = IsSelected ? 1 : 0.5};
+            var pen = new Pen(brush, 1.5);
 
             var pathFigure = new PathFigure();
             pathFigure.StartPoint = From;

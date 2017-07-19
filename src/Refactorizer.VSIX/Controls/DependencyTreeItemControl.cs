@@ -173,6 +173,12 @@ namespace Refactorizer.VSIX.Controls
             if (_outReferenceArdoner.ContainsKey(referenceModel.Id))
             {
                 adorner = _outReferenceArdoner[referenceModel.Id];
+                if (adorner.IsSelected != IsSelected)
+                {
+                    DeleteArdoner(referenceModel.Id);
+                    Changed = true;
+                    return;
+                }
 
                 // Adding this item to InReference of referenced tree view item to draw the backline
                 // Only update if some some point has changed
@@ -193,7 +199,8 @@ namespace Refactorizer.VSIX.Controls
                 if (!referenceTreeItemControl.ReferenceControls.Contains(this))
                     referenceTreeItemControl.ReferenceControls.Add(this);
 
-                adorner = new BezierCurveAdorner(this, from, controlOne, controlTwo, to) {IsHitTestVisible = false};
+                adorner = new BezierCurveAdorner(this, from, controlOne, controlTwo, to) { IsHitTestVisible = false };
+                adorner.IsSelected = IsSelected;
                 _host.OutReferencesAdornerLayer.Add(adorner);
                 _outReferenceArdoner.Add(referenceModel.Id, adorner);
                 _host.OutReferencesAdornerLayer.UpdateLayout();
@@ -202,10 +209,10 @@ namespace Refactorizer.VSIX.Controls
 
         private static int GetOffsetFactor(IModel relatedModel)
         {
-            return relatedModel is Method || relatedModel is Field || relatedModel is Property ? 4 
-                : relatedModel is Class ? 3 
-                : relatedModel is Namespace ? 2 
-                : 1;
+            return relatedModel is Method || relatedModel is Field || relatedModel is Property ? 4
+                : relatedModel is Class ? 3
+                    : relatedModel is Namespace ? 2
+                        : 1;
         }
 
         private void DeleteLines()
@@ -216,6 +223,16 @@ namespace Refactorizer.VSIX.Controls
             _host.OutReferencesAdornerLayer.UpdateLayout();
 
             _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
+        }
+
+        private void DeleteArdoner(Guid id)
+        {
+            if (!_outReferenceArdoner.ContainsKey(id))
+                return;
+
+            var adorner = _outReferenceArdoner[id];
+            _outReferenceArdoner.Remove(id);
+            _host.OutReferencesAdornerLayer.Remove(adorner);
         }
     }
 }
