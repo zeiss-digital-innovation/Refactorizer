@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
@@ -12,52 +13,41 @@ namespace Refactorizer.VSIX.Controls
     {
         private readonly DependencyTreeControl _host;
 
-        private bool _changed;
-
-        private readonly Dictionary<Guid, TreeViewItem> _indirectRefererencedTreeViewItems = new Dictionary<Guid, TreeViewItem>();
+        public bool Changed;
 
         private Dictionary<Guid, BezierCurveAdorner> _inReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
 
         private Dictionary<Guid, BezierCurveAdorner> _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
 
-        public List<DependencyTreeItemControl> InReferenceArdoner = new List<DependencyTreeItemControl>();
+        public List<DependencyTreeItemControl> ReferenceControls = new List<DependencyTreeItemControl>();
 
         public DependencyTreeItemControl Root { get; set; }
 
-        public List<DependencyTreeItemControl> Childrens { get; set; }
+        public List<DependencyTreeItemControl> Childrens { get; set; } = new List<DependencyTreeItemControl>();
 
         public DependencyTreeItemControl(DependencyTreeControl host)
         {
+            Changed = true;
             _host = host;
             DataContextChanged += TreeCanvasItemDataContextChanged;
-            BindEvents(this);
+            Expanded += TreeViewItemUpdate;
+            Collapsed += TreeViewItemUpdate;
+            Selected += TreeViewItemUpdate;
+            Unselected += TreeViewItemUpdate;
         }
 
-        private void BindEvents(DependencyTreeItemControl view)
+        private void TreeViewItemUpdate(object sender, RoutedEventArgs e)
         {
-            view.Expanded += TreeViewItemExpanded;
-            view.Expanded -= TreeViewItemExpanded;
-            view.Collapsed -= TreeViewItemCollapse;
-            view.Collapsed += TreeViewItemCollapse;
-            view.Selected -= TreeViewItemSelected;
-            view.Selected += TreeViewItemSelected;
-            view.Unselected -= TreeViewItemSelected;
-            view.Unselected += TreeViewItemSelected;
-        }
+            if (Changed == false)
+            {
+                Changed = true;
 
-        private void TreeViewItemSelected(object sender, RoutedEventArgs e)
-        {
-            _changed = true;
-        }
+                foreach (var children in Childrens)
+                    children.Changed = true;
 
-        private void TreeViewItemExpanded(object sender, RoutedEventArgs e)
-        {
-            _changed = true;
-        }
-
-        private void TreeViewItemCollapse(object sender, RoutedEventArgs e)
-        {
-            _changed = true;
+                foreach (var control in ReferenceControls)
+                    control.Changed = true;
+            }
         }
 
         /// <summary>
@@ -72,13 +62,11 @@ namespace Refactorizer.VSIX.Controls
         private void TreeCanvasItemDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
             if (!_host.Contains(this))
-            {
                 _host.AddTreeViewItem(this);
 
-                _changed = true;
-                LayoutUpdated -= TreeCanvasItemLayoutUpdate;
-                LayoutUpdated += TreeCanvasItemLayoutUpdate;
-            }
+            Changed = true;
+            LayoutUpdated -= TreeCanvasItemLayoutUpdate;
+            LayoutUpdated += TreeCanvasItemLayoutUpdate;
         }
 
         private void TreeCanvasItemLayoutUpdate(object sender, EventArgs e)
@@ -87,87 +75,74 @@ namespace Refactorizer.VSIX.Controls
             if (viewModel == null)
                 return;
 
-            var relatedModel = viewModel.RelatedModel;
-
             // As there is no hide event, we need to do this check all time
-            if ((IsExpanded || !relatedModel.HasChildren || !IsVisible) && _outReferenceArdoner.Count > 0)
+            if ((IsExpanded || !IsVisible) && Childrens.Any() && _outReferenceArdoner.Count > 0)
+            {
                 DeleteLines();
+                return;
+            }
 
-            if (!_changed)
+            if (!Changed)
                 return;
 
-            _changed = false;
+            Changed = false;
 
-            var references = relatedModel.References;
+            var relatedModel = viewModel.RelatedModel;
+            var references = GetReferences(relatedModel);
 
-            var @class = viewModel.RelatedModel as Class;
-            if (@class != null)
-            {
-                references = @class.Fields.Aggregate(references,
-                    (current, field) => current.Union(field.References).ToList());
-                references = @class.Properties.Aggregate(references,
-                    (current, property) => current.Union(property.References).ToList());
-                references = @class.Methods.Aggregate(references, 
-                    (current, method) => current.Union(method.References).ToList());
-            }
+            Trace.WriteLine($"Update {relatedModel.Name}");
 
             foreach (var reference in references)
             {
-                var referenceTreeViewItem = _host.FindReferencedItemOrParent(reference);
-                if (referenceTreeViewItem == null)
+                var referenceTreeItemControl = _host.FindReferencedItemOrParent(reference);
+                if (referenceTreeItemControl == null || referenceTreeItemControl.Equals(this))
+                {
                     continue;
+                }
+                Trace.WriteLine($"{reference.Name}");
 
-                //if (referenceTreeViewItem.IsExpanded)
-                //{
-                //    if (viewModel.HasDummyChild)
-                //        viewModel.RemoveDummyAndLoadChildren();
-
-                //    var childrenOfReference =
-                //        _host.FindLastExpandedDependencyTreeViewItems(referenceTreeViewItem);
-
-                //    if (childrenOfReference.Count > 0 && _outReferenceArdoner.ContainsKey(reference.Id))
-                //        DeleteArdoner(reference.Id);
-
-                //    foreach (var child in childrenOfReference)
-                //    {
-                //        var childDataModel = child.DataContext as DependencyTreeViewItemViewModel;
-                //        if (childDataModel == null) continue;
-                        
-                //        // We need to update this item if references updated
-                //        BindEvents(child);
-
-                //        var model = childDataModel.RelatedModel;
-                //        CreateOutRefrenceArdoner(child, relatedModel, model);
-
-                //        if (_indirectRefererencedTreeViewItems.ContainsKey(model.Id)) continue;
-                //        _indirectRefererencedTreeViewItems.Add(model.Id, child);
-                //    }
-
-                //    if (childrenOfReference.Count == 0)
-                //        CreateOutRefrenceArdoner(referenceTreeViewItem, relatedModel, reference);
-                //}
-                //else
-                //{
-                    // We need to update this item if references updated
-                    BindEvents(referenceTreeViewItem);
-                    
-                    CreateOutRefrenceArdoner(referenceTreeViewItem, relatedModel, reference);
-                //}
+                CreateOutRefrenceArdoner(relatedModel, referenceTreeItemControl, reference);
             }
-            //foreach (var key in _indirectRefererencedTreeViewItems.Keys.ToList())
-            //{
-            //    var item = _indirectRefererencedTreeViewItems[key];
-            //    if (!item.IsVisible || item.IsExpanded)
-            //    {
-            //        DeleteArdoner(key);
-            //        _indirectRefererencedTreeViewItems.Remove(key);
-            //    }
-            //}
+
+            Trace.WriteLine($"----------------------------------------------------");
         }
 
-        // TODO: Avoid duplicate adordner, add weight to increate line width if mutliple references between the same dependencies
-        private void CreateOutRefrenceArdoner(DependencyTreeItemControl referenceTreeItemControl, IModel relatedModel,
-            IModel reference)
+        private static ICollection<IModel> GetReferences(IModel relatedModel)
+        {
+            var references = relatedModel.References;
+
+            var @class = relatedModel as Class;
+            if (@class != null)
+            {
+                foreach (var field in @class.Fields)
+                {
+                    foreach (var reference in field.References)
+                    {
+                        if (!references.Contains(reference))
+                            references.Add(reference);
+                    }
+                }
+                foreach (var property in @class.Properties)
+                {
+                    foreach (var reference in property.References)
+                    {
+                        if (!references.Contains(reference))
+                            references.Add(reference);
+                    }
+                }
+                foreach (var method in @class.Methods)
+                {
+                    foreach (var reference in method.References)
+                    {
+                        if (!references.Contains(reference))
+                            references.Add(reference);
+                    }
+                }
+            }
+            return references;
+        }
+
+        private void CreateOutRefrenceArdoner(IModel relatedModel, DependencyTreeItemControl referenceTreeItemControl, IModel referenceModel)
         {
             BezierCurveAdorner adorner;
             var xOffset = 30;
@@ -183,10 +158,10 @@ namespace Refactorizer.VSIX.Controls
             var fromXOffset = xOffset;
             var toXOffset = xOffset;
 
-            if (relatedModel.Parent != null && !relatedModel.Parent.Id.Equals(reference.Parent.Id))
+            if (relatedModel.Parent != null && !relatedModel.Parent.Id.Equals(referenceModel.Parent.Id))
             {
                 fromXOffset = xOffset * (GetOffsetFactor(relatedModel));
-                toXOffset = xOffset * (GetOffsetFactor(reference));
+                toXOffset = xOffset * (GetOffsetFactor(referenceModel));
             }
 
             controlOne.X = from.X - fromXOffset;
@@ -195,19 +170,11 @@ namespace Refactorizer.VSIX.Controls
             controlTwo.X = to.X - toXOffset;
             controlTwo.Y = to.Y;
 
-            if (_outReferenceArdoner.ContainsKey(reference.Id))
+            if (_outReferenceArdoner.ContainsKey(referenceModel.Id))
             {
-                adorner = _outReferenceArdoner[reference.Id];
-                //if (adorner.IsSelected != IsSelected)
-                //{
-                //    DeleteArdoner(reference.Id);
-                //    return;
-                //}
+                adorner = _outReferenceArdoner[referenceModel.Id];
 
                 // Adding this item to InReference of referenced tree view item to draw the backline
-                if (!referenceTreeItemControl.InReferenceArdoner.Contains(this))
-                    referenceTreeItemControl.InReferenceArdoner.Add(this);
-
                 // Only update if some some point has changed
                 if (adorner.From != from ||
                     adorner.ControlOne != controlOne ||
@@ -223,10 +190,13 @@ namespace Refactorizer.VSIX.Controls
             }
             else
             {
+                if (!referenceTreeItemControl.ReferenceControls.Contains(this))
+                    referenceTreeItemControl.ReferenceControls.Add(this);
+
                 adorner = new BezierCurveAdorner(this, from, controlOne, controlTwo, to) {IsHitTestVisible = false};
-                //adorner.IsSelected = IsSelected;
                 _host.OutReferencesAdornerLayer.Add(adorner);
-                _outReferenceArdoner.Add(reference.Id, adorner);
+                _outReferenceArdoner.Add(referenceModel.Id, adorner);
+                _host.OutReferencesAdornerLayer.UpdateLayout();
             }
         }
 
@@ -246,16 +216,6 @@ namespace Refactorizer.VSIX.Controls
             _host.OutReferencesAdornerLayer.UpdateLayout();
 
             _outReferenceArdoner = new Dictionary<Guid, BezierCurveAdorner>();
-        }
-
-        private void DeleteArdoner(Guid id)
-        {
-            if (!_outReferenceArdoner.ContainsKey(id))
-                return;
-
-            var adorner = _outReferenceArdoner[id];
-            _outReferenceArdoner.Remove(id);
-            _host.OutReferencesAdornerLayer.Remove(adorner);
         }
     }
 }

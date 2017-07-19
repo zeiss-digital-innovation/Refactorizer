@@ -43,29 +43,55 @@ namespace Refactorizer.VSIX.Controls
             return new DependencyTreeItemControl(this);
         }
 
-        public void AddTreeViewItem(DependencyTreeItemControl newItemControl)
+        public void AddTreeViewItem(DependencyTreeItemControl newItem)
         {
-            DependencyTreeViewItems.Add(newItemControl);
+            DependencyTreeViewItems.Add(newItem);
+
+            var view = newItem.DataContext as DependencyTreeItemView;
+            if (view == null)
+                throw new System.Exception($"DataContext is not a DependencyTreeItemView");
 
             // Search root
-            var view = newItemControl.DataContext as DependencyTreeItemView;
+            var root = DependencyTreeViewItems.FirstOrDefault(
+                x =>
+                {
+                    var dependencyTreeItemView = x.DataContext as DependencyTreeItemView;
+                    return dependencyTreeItemView != null &&
+                           dependencyTreeItemView.RelatedModel.Id.Equals(view.RelatedModel.Id);
+                });
+
+            if (root == null)
+                return;
+
+            if (root.Childrens.Contains(newItem))
+                return;
+
+            newItem.Root = root;
+            root.Childrens.Add(newItem);
         }
 
         public DependencyTreeItemControl FindReferencedItemOrParent(IModel viewModel)
         {
-            var item = FindViewModelByDataModel(viewModel);
+            if (viewModel == null)
+                return null;
 
-            // If not found search traversal for namespaces and classes
-            if ((item == null || !item.IsVisible) && (viewModel is Namespace || viewModel is Class || viewModel is Method || viewModel is Property || viewModel is Field))
+            var item = FindControlByDataModel(viewModel);
+            while (item == null)
             {
-                var parentTreeViewItem = FindViewModelByDataModel(viewModel.Parent);
-                var reference = parentTreeViewItem?.DataContext as DependencyTreeItemView;
-                if (reference != null)
-                {
-                    item = FindReferencedItemOrParent(reference.RelatedModel);
-                }
-            }
+                if (viewModel.Parent == null || viewModel is Project)
+                    break;
 
+                viewModel = viewModel.Parent;
+
+                var parentControl = FindControlByDataModel(viewModel);
+
+                if (parentControl == null)
+                    continue;
+
+                var view = parentControl?.DataContext as DependencyTreeItemView;
+                viewModel = view?.RelatedModel;
+                item = parentControl;
+            }
             return item;
         }
 
@@ -109,7 +135,7 @@ namespace Refactorizer.VSIX.Controls
             return null;
         }
 
-        public DependencyTreeItemControl FindViewModelByDataModel(IModel dataModel)
+        public DependencyTreeItemControl FindControlByDataModel(IModel dataModel)
         {
             foreach (var dependencyTreeViewItem in DependencyTreeViewItems)
             {
@@ -128,7 +154,15 @@ namespace Refactorizer.VSIX.Controls
 
         public bool Contains(DependencyTreeItemControl dependencyTreeItemControl)
         {
-            return DependencyTreeViewItems.Contains(dependencyTreeItemControl);
+            var dependencyTreeItemView = dependencyTreeItemControl.DataContext as DependencyTreeItemView;
+            if (dependencyTreeItemView == null)
+                return false;
+
+            var id = dependencyTreeItemView.RelatedModel.Id;
+            return DependencyTreeViewItems.Select(x => x.DataContext as DependencyTreeItemView).ToList()
+                .Where(x => x != null).ToList()
+                .Where(x => x.RelatedModel != null).ToList()
+                .Exists(x => x.RelatedModel.Id.Equals(id));
         }
     }
 }

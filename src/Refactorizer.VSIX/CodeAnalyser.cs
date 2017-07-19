@@ -382,27 +382,28 @@ namespace Refactorizer.VSIX
             var constructorDeclarations = syntaxNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
             foreach (var constructorDeclaration in constructorDeclarations)
             {
-                var methodName = constructorDeclaration.Identifier.ToString();
+                var syntaxToken = constructorDeclaration.Identifier;
                 var parameterDeclarations = constructorDeclaration.ParameterList.Parameters;
 
-                CreateMethod($"{methodName}", constructorDeclaration, parameterDeclarations, @class, model);
+                CreateMethod(syntaxToken, constructorDeclaration, parameterDeclarations, @class, model);
             }
 
             // Methods
             var methodDeclarations = syntaxNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
             foreach (var methodDeclartion in methodDeclarations)
             {
-                var methodName = methodDeclartion.Identifier.ToString();
-                var returnType = methodDeclartion.ReturnType.ToString();
+                var syntaxToken = methodDeclartion.Identifier;
+                var returnToken = methodDeclartion.ReturnType;
+                var symbol = model.GetSymbolInfo(returnToken).Symbol;
                 var parameterDeclarations = methodDeclartion.ParameterList.Parameters;
 
-                CreateMethod($"{methodName}", methodDeclartion, parameterDeclarations, @class, model, returnType);
+                var method = CreateMethod(syntaxToken, methodDeclartion, parameterDeclarations, @class, model);
+                method.ReturnType = symbol.ToDisplayString(SymbolDisplayFormat.CSharpShortErrorMessageFormat);
+                _methodToClassMapping[method].Add(symbol.ToDisplayString());
             }
         }
 
-        private void CreateMethod(string methodName, SyntaxNode syntaxNode,
-            SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, SemanticModel model,
-            string returnType = null)
+        private Method CreateMethod(SyntaxToken syntaxToken, SyntaxNode syntaxNode, SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, SemanticModel model)
         {
             var walker = new MethodSyntaxWalker(model);
             walker.Visit(syntaxNode);
@@ -418,16 +419,16 @@ namespace Refactorizer.VSIX
             }
 
             var method =
-                new Method(Guid.NewGuid(), methodName, @class)
+                new Method(Guid.NewGuid(), syntaxToken.ToString(), @class)
                 {
                     Parameter = string.Join(", ", parametersAsListOfStrings)
                 };
-            if (returnType != null)
-                method.ReturnType = returnType;
 
             @class.Methods.Add(method);
             _methodToClassMapping.Add(method, walker.ClassReferences);
             _methodToMethodMapping.Add(method, walker.MethodReferences);
+
+            return method;
         }
 
         private void AddFields(SyntaxNode root, Class @class, SemanticModel model)

@@ -30,7 +30,7 @@ namespace Refactorizer.VSIX.Analyser
                 var symbol = _semanticModel.GetSymbolInfo(expressionSyntax).Symbol;
                 if (symbol != null)
                 {
-                    var type = symbol.ContainingSymbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                    var type = symbol.ContainingSymbol.ToDisplayString();
                     ClassReferences.Add(type);
                 }
             }
@@ -39,14 +39,14 @@ namespace Refactorizer.VSIX.Analyser
 
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            var type = _semanticModel.GetSymbolInfo(node).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+            var type = _semanticModel.GetSymbolInfo(node).Symbol.ToDisplayString();
             MethodReferences.Add(type);
             base.VisitInvocationExpression(node);
         }
 
         public override void VisitVariableDeclaration(VariableDeclarationSyntax node)
         {
-            var type = _semanticModel.GetSymbolInfo(node.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+            var type = _semanticModel.GetSymbolInfo(node.Type).Symbol.ToDisplayString();
             ClassReferences.Add(type);
             base.VisitVariableDeclaration(node);
         }

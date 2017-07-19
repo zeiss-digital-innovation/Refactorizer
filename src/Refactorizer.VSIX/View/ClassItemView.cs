@@ -6,10 +6,6 @@ namespace Refactorizer.VSIX.View
     {
         public ClassItemView(DependencyTreeItemView parent, IModel relatedModel) : base(parent, relatedModel)
         {
-        }
-
-        public override void Loadchildren()
-        {
             var @class = RelatedModel as Class;
             if (@class == null)
                 return;

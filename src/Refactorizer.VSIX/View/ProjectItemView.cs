@@ -7,10 +7,6 @@ namespace Refactorizer.VSIX.View
     {
         public ProjectItemView(DependencyTreeItemView parent, IModel relatedModel) : base(parent, relatedModel)
         {
-        }
-
-        public override void Loadchildren()
-        {
             var project = RelatedModel as Project;
             if (project == null)
                 return;

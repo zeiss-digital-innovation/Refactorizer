@@ -7,10 +7,6 @@ namespace Refactorizer.VSIX.View
 
         public NamespaceItemView(DependencyTreeItemView parent, IModel relatedModel) : base(parent, relatedModel)
         {
-        }
-
-        public override void Loadchildren()
-        {
             var @namespace = RelatedModel as Namespace;
             if (@namespace == null)
                 return;
