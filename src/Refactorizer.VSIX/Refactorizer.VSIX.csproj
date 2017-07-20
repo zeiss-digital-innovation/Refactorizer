@@ -78,6 +78,7 @@
     <Compile Include="Controls\SolutionTree.xaml.cs">
       <DependentUpon>SolutionTree.xaml</DependentUpon>
     </Compile>
+    <Compile Include="RelayCommand.cs" />
     <Compile Include="View\FieldItemView.cs" />
     <Compile Include="View\MethodItemView.cs" />
     <Compile Include="View\NotifyPropertyChanged.cs" />

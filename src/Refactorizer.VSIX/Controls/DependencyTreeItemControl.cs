@@ -211,8 +211,8 @@ namespace Refactorizer.VSIX.Controls
         {
             return relatedModel is Method || relatedModel is Field || relatedModel is Property ? 4
                 : relatedModel is Class ? 3
-                    : relatedModel is Namespace ? 2
-                        : 1;
+                : relatedModel is Namespace ? 2
+                : 1;
         }
 
         private void DeleteLines()

@@ -64,10 +64,16 @@
                         <HierarchicalDataTemplate
                             DataType="{x:Type view:ClassItemView}"
                             ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal">
-                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSFileNode}" />
-                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions >
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="200" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions >
+                                <imaging:CrispImage Grid.Column="0" Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSFileNode}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                <Button Grid.Column="2" Content="Open" Command="{Binding Open}"/>
+                            </Grid>
                         </HierarchicalDataTemplate>
 
                         <HierarchicalDataTemplate

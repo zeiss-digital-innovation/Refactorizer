@@ -322,7 +322,7 @@ namespace Refactorizer.VSIX
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(classDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
-                        semanticModel);
+                        semanticModel, msDocument.FilePath);
                 }
 
                 // Use the syntax tree to get all interface declations inside
@@ -335,7 +335,7 @@ namespace Refactorizer.VSIX
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
-                        semanticModel);
+                        semanticModel, msDocument.FilePath);
                 }
             }
         }
@@ -361,11 +361,11 @@ namespace Refactorizer.VSIX
         }
 
         private void CreateClass(SyntaxNode syntaxNode, ISymbol symbol, Namespace @namespace,
-            List<string> referencedClasses, List<string> referencedNamespaces, SemanticModel model)
+            List<string> referencedClasses, List<string> referencedNamespaces, SemanticModel model, string path)
         {
             var className = symbol.Name;
 
-            var @class = new Class(Guid.NewGuid(), className, @namespace);
+            var @class = new Class(Guid.NewGuid(), className, @namespace, path);
             _classToClassMapping.Add(@class, referencedClasses);
             _classToNamespaceMapping.Add(@class, referencedNamespaces);
 
