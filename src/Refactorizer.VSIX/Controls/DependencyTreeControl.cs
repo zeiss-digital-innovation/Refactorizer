@@ -164,5 +164,14 @@ namespace Refactorizer.VSIX.Controls
                 .Where(x => x.RelatedModel != null).ToList()
                 .Exists(x => x.RelatedModel.Id.Equals(id));
         }
+
+        public void ClearSelection()
+        {
+            var selected = DependencyTreeViewItems.Where(x => x.IsSelected = true).ToList();
+            foreach (var control in selected)
+            {
+                control.IsSelected = false;
+            }
+        }
     }
 }

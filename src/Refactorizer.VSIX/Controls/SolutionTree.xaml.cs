@@ -24,14 +24,22 @@ namespace Refactorizer.VSIX.Controls
 
         private void WindowLoaded(object sender, RoutedEventArgs e)
         {
+            if (_solution != null)
+                return;
+
+            DoCreateGraph();
+        }
+
+        private void DoCreateGraph()
+        {
             var backgroundWorker = new BackgroundWorker {WorkerReportsProgress = true};
             backgroundWorker.DoWork += CreateGraph;
 
             ProgressBar.Visibility = Visibility.Visible;
             Error.Visibility = Visibility.Hidden;
+            Tree.Visibility = Visibility.Hidden;
             backgroundWorker.RunWorkerAsync();
-            Solution.TransformToAncestor(this).Transform(new Point(0, 0));
-        } 
+        }
 
         private async void CreateGraph(object sender, DoWorkEventArgs e)
         {
@@ -43,6 +51,7 @@ namespace Refactorizer.VSIX.Controls
                     Dispatcher.Invoke(() =>
                     {
                         ProgressBar.Visibility = Visibility.Hidden;
+                        Tree.Visibility = Visibility.Visible;
                         DataContext = new SolutionViewModel(_solution);
                     });
                 }
@@ -53,8 +62,19 @@ namespace Refactorizer.VSIX.Controls
                 {
                     Error.Visibility = Visibility.Visible;
                     ProgressBar.Visibility = Visibility.Hidden;
+                    Tree.Visibility = Visibility.Hidden;
                 });
             }
+        }
+
+        private void Refresh(object sender, RoutedEventArgs e)
+        {
+            DoCreateGraph();
+        }
+
+        private void ClearSelection(object sender, RoutedEventArgs e)
+        {
+            DependencyTreeControl.ClearSelection();
         }
     }
 }

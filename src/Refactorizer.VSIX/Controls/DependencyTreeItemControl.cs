@@ -38,16 +38,16 @@ namespace Refactorizer.VSIX.Controls
 
         private void TreeViewItemUpdate(object sender, RoutedEventArgs e)
         {
-            if (Changed == false)
-            {
-                Changed = true;
+            if (Changed)
+                return;
 
-                foreach (var children in Childrens)
-                    children.Changed = true;
+            Changed = true;
 
-                foreach (var control in ReferenceControls)
-                    control.Changed = true;
-            }
+            foreach (var children in Childrens)
+                children.Changed = true;
+
+            foreach (var control in ReferenceControls)
+                control.Changed = true;
         }
 
         /// <summary>
@@ -90,8 +90,6 @@ namespace Refactorizer.VSIX.Controls
             var relatedModel = viewModel.RelatedModel;
             var references = GetReferences(relatedModel);
 
-            Trace.WriteLine($"Update {relatedModel.Name}");
-
             foreach (var reference in references)
             {
                 var referenceTreeItemControl = _host.FindReferencedItemOrParent(reference);
@@ -99,12 +97,9 @@ namespace Refactorizer.VSIX.Controls
                 {
                     continue;
                 }
-                Trace.WriteLine($"{reference.Name}");
 
                 CreateOutRefrenceArdoner(relatedModel, referenceTreeItemControl, reference);
             }
-
-            Trace.WriteLine($"----------------------------------------------------");
         }
 
         private static ICollection<IModel> GetReferences(IModel relatedModel)
