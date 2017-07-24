@@ -20,9 +20,13 @@ namespace Refactorizer.VSIX.Models
         /// <inheritdoc />
         public IModel Parent { get; set; }
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
+
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
         public bool HasChildren => Methods.Count > 0;
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public Guid Id { get; }
 

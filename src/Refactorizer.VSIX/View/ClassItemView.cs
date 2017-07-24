@@ -41,9 +41,9 @@ namespace Refactorizer.VSIX.View
             if (@class == null)
                 return;
 
-            var dte = Package.GetGlobalService(typeof(SDTE)) as DTE;
-            dte?.MainWindow.Activate();
-            dte?.ItemOperations.OpenFile(@class.Path, EnvDTE.Constants.vsViewKindTextView);
+            //var dte = Package.GetGlobalService(typeof(SDTE)) as DTE;
+            //dte?.MainWindow.Activate();
+            //dte?.ItemOperations.OpenFile(@class.Path, EnvDTE.Constants.vsViewKindTextView);
             // ((EnvDTE.TextSelection)dte2.ActiveDocument.Selection).GotoLine(fileline, true);
         }
     }

@@ -35,7 +35,7 @@
                                 <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
                                                  Color="Transparent" />
                                 <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTabSelectedTabColorKey}}" />
                             </Style.Resources>
                             <Setter Property="Background" Value="Transparent" />
                             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />

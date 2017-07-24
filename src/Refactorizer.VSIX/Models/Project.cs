@@ -20,7 +20,9 @@ namespace Refactorizer.VSIX.Models
 
         public List<Namespace> Namespaces { get; set; } = new List<Namespace>();
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
+
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
         public Project(Guid id, ProjectId projectId, string name)
         {
@@ -28,6 +30,8 @@ namespace Refactorizer.VSIX.Models
             ProjectId = projectId;
             Name = name;
         }
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public bool HasChildren => Namespaces.Count > 0;
     }

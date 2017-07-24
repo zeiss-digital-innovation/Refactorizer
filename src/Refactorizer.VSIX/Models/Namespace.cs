@@ -19,9 +19,13 @@ namespace Refactorizer.VSIX.Models
 
         public List<Class> Classes { get; set; } = new List<Class>();
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
+
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
         public Guid Id { get; }
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public bool HasChildren => Classes.Count > 0;
     }

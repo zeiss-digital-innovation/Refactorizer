@@ -54,6 +54,7 @@
     <Compile Include="Analyser\MethodSyntaxWalker.cs" />
     <Compile Include="ClassnameFormater.cs" />
     <Compile Include="CodeAnalyser.cs" />
+    <Compile Include="Controls\ElipseAdorner.cs" />
     <Compile Include="Converter\BrushColorConverter.cs" />
     <Compile Include="Controls\DependencyTreeControl.cs" />
     <Compile Include="Controls\DependencyTreeItemControl.cs" />
