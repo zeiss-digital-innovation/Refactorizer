@@ -21,7 +21,7 @@ namespace Refactorizer.VSIX.Controls
             set => SetValue(DependencyTreeViewItemsProperty, value);
         }
 
-        internal AdornerLayer OutReferencesAdornerLayer { get; set; }
+        internal AdornerLayer AdornerLayer { get; set; }
 
         /// <summary>
         /// Init template components
@@ -30,7 +30,7 @@ namespace Refactorizer.VSIX.Controls
         {
             base.OnApplyTemplate();
 
-            OutReferencesAdornerLayer = AdornerLayer.GetAdornerLayer(this);
+            AdornerLayer = AdornerLayer.GetAdornerLayer(this);
             DependencyTreeViewItems = new ObservableCollection<DependencyTreeItemControl>();
         }
 
@@ -76,7 +76,7 @@ namespace Refactorizer.VSIX.Controls
                 return null;
 
             var item = FindControlByDataModel(viewModel);
-            while (item == null)
+            while (item == null || !item.IsVisible)
             {
                 if (viewModel.Parent == null || viewModel is Project)
                     break;
@@ -163,6 +163,15 @@ namespace Refactorizer.VSIX.Controls
                 .Where(x => x != null).ToList()
                 .Where(x => x.RelatedModel != null).ToList()
                 .Exists(x => x.RelatedModel.Id.Equals(id));
+        }
+
+        public void ClearSelection()
+        {
+            var selected = DependencyTreeViewItems.Where(x => x.IsSelected = true).ToList();
+            foreach (var control in selected)
+            {
+                control.IsSelected = false;
+            }
         }
     }
 }

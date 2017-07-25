@@ -5,11 +5,12 @@ namespace Refactorizer.VSIX.Models
 {
     internal class Class : IModel
     {
-        public Class(Guid id, string name, IModel parent)
+        public Class(Guid id, string name, IModel parent, string path)
         {
             Id = id;
             Name = name;
             Parent = parent;
+            Path = path;
         }
 
         public string FullName => ClassnameFormater.FullName((Parent as Namespace)?.Name, Name);
@@ -19,9 +20,13 @@ namespace Refactorizer.VSIX.Models
         /// <inheritdoc />
         public IModel Parent { get; set; }
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
+
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
         public bool HasChildren => Methods.Count > 0;
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public Guid Id { get; }
 
@@ -36,5 +41,7 @@ namespace Refactorizer.VSIX.Models
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Public;
 
         public List<Namespace> ReferencedNamespaces { get; set; } = new List<Namespace>();
+
+        public string Path { get; set; }
     }
 }

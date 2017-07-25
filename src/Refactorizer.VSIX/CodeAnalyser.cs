@@ -25,9 +25,8 @@ namespace Refactorizer.VSIX
     {
         private Dictionary<Class, List<string>> _classToClassMapping = new Dictionary<Class, List<string>>();
 
-        private Dictionary<Class, List<string>> _classToNamespaceMapping = new Dictionary<Class, List<string>>();
-
         private Dictionary<Field, string> _fieldToTypeMapping = new Dictionary<Field, string>();
+
         private Dictionary<Method, List<string>> _methodToClassMapping = new Dictionary<Method, List<string>>();
 
         private Dictionary<Method, List<string>> _methodToMethodMapping = new Dictionary<Method, List<string>>();
@@ -92,7 +91,6 @@ namespace Refactorizer.VSIX
         private void ResetTmpStorage()
         {
             _classToClassMapping = new Dictionary<Class, List<string>>();
-            _classToNamespaceMapping = new Dictionary<Class, List<string>>();
             _namespaceToNamespaceMapping = new Dictionary<Namespace, List<string>>();
             _projectToProjectMapping = new Dictionary<Project, List<ProjectId>>();
             _fieldToTypeMapping = new Dictionary<Field, string>();
@@ -110,8 +108,11 @@ namespace Refactorizer.VSIX
                 foreach (var reference in references)
                 {
                     var projectReference = solution.Projects.FirstOrDefault(x => x.ProjectId.Equals(reference));
-                    if (projectReference != null)
-                        project.References.Add(projectReference);
+                    if (projectReference == null)
+                        continue;
+
+                    project.OutReferences.Add(projectReference);
+                    projectReference.InReferences.Add(project);
                 }
             }
         }
@@ -129,8 +130,11 @@ namespace Refactorizer.VSIX
                     var referenceNamespace = solution.Projects.SelectMany(x => x.Namespaces).ToList()
                         .FirstOrDefault(x => x.Name.Equals(reference));
 
-                    if (referenceNamespace != null)
-                        ns.References.Add(referenceNamespace);
+                    if (referenceNamespace == null)
+                        continue;
+
+                    ns.OutReferences.Add(referenceNamespace);
+                    referenceNamespace.InReferences.Add(ns);
                 }
             }
         }
@@ -145,8 +149,11 @@ namespace Refactorizer.VSIX
                 {
                     var classReference = GetClassByFullName(solution, referenceFullName);
 
-                    if (classReference != null)
-                        @class.References.Add(classReference);
+                    if (classReference == null)
+                        continue;
+
+                    @class.OutReferences.Add(classReference);
+                    classReference.InReferences.Add(@class);
                 }
             }
         }
@@ -158,12 +165,13 @@ namespace Refactorizer.VSIX
                 var property = keyValue.Key;
                 var type = keyValue.Value;
 
-                var @class = GetClassByName(solution, type);
+                var @class = GetClassByFullName(solution, type);
 
                 if (@class == null)
                     continue;
 
-                property.References.Add(@class);
+                property.OutReferences.Add(@class);
+                @class.InReferences.Add(property);
             }
         }
 
@@ -179,7 +187,8 @@ namespace Refactorizer.VSIX
                 if (@class == null)
                     continue;
 
-                field.References.Add(@class);
+                field.OutReferences.Add(@class);
+                @class.InReferences.Add(field);
             }
         }
 
@@ -190,34 +199,18 @@ namespace Refactorizer.VSIX
                 var method = keyValue.Key;
                 var referencedMethods = keyValue.Value;
 
-                var parentClass = method.Parent as Class;
-                var parentNamespace = parentClass?.Parent as Namespace;
-                if (parentNamespace == null)
-                    continue;
-
                 foreach (var fullMethodName in referencedMethods)
                 {
-                    var split = fullMethodName.Split('.');
-                    if (split.Length < 2)
+                    var classMethod = solution.Projects.SelectMany(x => x.Namespaces).ToList()
+                        .SelectMany(x => x.Classes).ToList()
+                        .SelectMany(x => x.Methods).ToList()
+                        .FirstOrDefault(x => x.FullName.Equals(fullMethodName));
+
+                    if (classMethod == null)
                         continue;
 
-                    var methodName = split.Last();
-                    var className = split[split.Length - 1];
-                    var namespaceName = string.Join(".", split.Take(split.Length - 2).ToList());
-                    var ns = parentNamespace;
-                    if (!parentNamespace.Name.Equals(namespaceName))
-                        ns = GetNamespaceByName(parentNamespace, namespaceName);
-
-                    if (ns == null)
-                        continue;
-
-                    var @class = GetClassFromNamespaceByName(ns, className);
-                    if (@class?.Methods != null && @class.Methods.Count > 0)
-                    {
-                        var classMethod = @class.Methods.FirstOrDefault(x => x.Name.Equals(methodName));
-                        if (classMethod != null)
-                            method.References.Add(classMethod);
-                    }
+                    method.OutReferences.Add(classMethod);
+                    classMethod.InReferences.Add(method);
                 }
             }
         }
@@ -237,8 +230,11 @@ namespace Refactorizer.VSIX
                 foreach (var fullClassName in referencedClasses)
                 {
                     var @class = GetClassByFullName(solution, fullClassName);
-                    if (@class != null)
-                        method.References.Add(@class);
+                    if (@class == null)
+                        continue;
+
+                    method.OutReferences.Add(@class);
+                    @class.InReferences.Add(method);
                 }
             }
         }
@@ -247,25 +243,6 @@ namespace Refactorizer.VSIX
         {
             var typeReference = solution.Projects.SelectMany(x => x.Namespaces).ToList().SelectMany(x => x.Classes)
                 .ToList().FirstOrDefault(x => x.FullName.Equals(type));
-            return typeReference;
-        }
-
-        private static Class GetClassFromNamespaceByName(Namespace ns, string className)
-        {
-            return ns.Classes.FirstOrDefault(nsClass => nsClass.Name.Equals(className));
-        }
-
-        private static Namespace GetNamespaceByName(Namespace parentNamespace, string namespaceName)
-        {
-            return parentNamespace.References.OfType<Namespace>().FirstOrDefault(refNs => refNs.Name.Equals(namespaceName));
-        }
-
-        private static Class GetClassByName(Solution solution, string name)
-        {
-            var typeReference = solution.Projects.SelectMany(x => x.Namespaces)
-                .ToList().SelectMany(x => x.Classes)
-                .ToList().FirstOrDefault(@class => @class.Name.Equals(name));
-
             return typeReference;
         }
 
@@ -321,7 +298,7 @@ namespace Refactorizer.VSIX
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(classDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
-                        semanticModel);
+                        semanticModel, msDocument.FilePath);
                 }
 
                 // Use the syntax tree to get all interface declations inside
@@ -334,7 +311,7 @@ namespace Refactorizer.VSIX
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
                     CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, referencedNamespaces,
-                        semanticModel);
+                        semanticModel, msDocument.FilePath);
                 }
             }
         }
@@ -360,13 +337,12 @@ namespace Refactorizer.VSIX
         }
 
         private void CreateClass(SyntaxNode syntaxNode, ISymbol symbol, Namespace @namespace,
-            List<string> referencedClasses, List<string> referencedNamespaces, SemanticModel model)
+            List<string> referencedClasses, List<string> referencedNamespaces, SemanticModel model, string path)
         {
             var className = symbol.Name;
 
-            var @class = new Class(Guid.NewGuid(), className, @namespace);
+            var @class = new Class(Guid.NewGuid(), className, @namespace, path);
             _classToClassMapping.Add(@class, referencedClasses);
-            _classToNamespaceMapping.Add(@class, referencedNamespaces);
 
             @namespace.Classes.Add(@class);
 
@@ -382,28 +358,29 @@ namespace Refactorizer.VSIX
             var constructorDeclarations = syntaxNode.DescendantNodes().OfType<ConstructorDeclarationSyntax>();
             foreach (var constructorDeclaration in constructorDeclarations)
             {
-                var syntaxToken = constructorDeclaration.Identifier;
                 var parameterDeclarations = constructorDeclaration.ParameterList.Parameters;
 
-                CreateMethod(syntaxToken, constructorDeclaration, parameterDeclarations, @class, model);
+                CreateMethod(constructorDeclaration, parameterDeclarations, @class, model);
             }
 
             // Methods
             var methodDeclarations = syntaxNode.DescendantNodes().OfType<MethodDeclarationSyntax>();
             foreach (var methodDeclartion in methodDeclarations)
             {
-                var syntaxToken = methodDeclartion.Identifier;
                 var returnToken = methodDeclartion.ReturnType;
                 var symbol = model.GetSymbolInfo(returnToken).Symbol;
+                if (symbol == null)
+                    continue;
+
                 var parameterDeclarations = methodDeclartion.ParameterList.Parameters;
 
-                var method = CreateMethod(syntaxToken, methodDeclartion, parameterDeclarations, @class, model);
+                var method = CreateMethod(methodDeclartion, parameterDeclarations, @class, model);
                 method.ReturnType = symbol.ToDisplayString(SymbolDisplayFormat.CSharpShortErrorMessageFormat);
                 _methodToClassMapping[method].Add(symbol.ToDisplayString());
             }
         }
 
-        private Method CreateMethod(SyntaxToken syntaxToken, SyntaxNode syntaxNode, SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, SemanticModel model)
+        private Method CreateMethod(SyntaxNode syntaxNode, SeparatedSyntaxList<ParameterSyntax> parameterDeclarations, Class @class, SemanticModel model)
         {
             var walker = new MethodSyntaxWalker(model);
             walker.Visit(syntaxNode);
@@ -417,9 +394,10 @@ namespace Refactorizer.VSIX
 
                 parametersAsListOfStrings.Add($"{parameterType} {parameterName}");
             }
+            var symbol = model.GetDeclaredSymbol(syntaxNode);
 
             var method =
-                new Method(Guid.NewGuid(), syntaxToken.ToString(), @class)
+                new Method(Guid.NewGuid(), symbol.Name, symbol.ToDisplayString(), @class)
                 {
                     Parameter = string.Join(", ", parametersAsListOfStrings)
                 };
@@ -438,7 +416,11 @@ namespace Refactorizer.VSIX
             var fieldDeclarations = root.DescendantNodes().OfType<FieldDeclarationSyntax>();
             foreach (var fieldDeclarationSyntax in fieldDeclarations)
             {
-                var type = model.GetSymbolInfo(fieldDeclarationSyntax.Declaration.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                var symbol = model.GetSymbolInfo(fieldDeclarationSyntax.Declaration.Type).Symbol;
+                if (symbol == null)
+                    continue;
+
+                var type = symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
                 var typeWithoutNs = type.Split('.').Last();
                 var name = fieldDeclarationSyntax.Declaration.Variables.ToString();
                 if (string.IsNullOrEmpty(type))
@@ -466,7 +448,11 @@ namespace Refactorizer.VSIX
             {
                 var identifierNameSyntax = propertyDeclarationSyntax.Type as IdentifierNameSyntax;
                 var name = identifierNameSyntax?.Identifier.ToString();
-                var type = model.GetSymbolInfo(propertyDeclarationSyntax.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat);
+                var symbol = model.GetSymbolInfo(propertyDeclarationSyntax.Type).Symbol;
+                if (symbol == null)
+                    continue;
+
+                var type = symbol.ToDisplayString();
                 var typeWithoutNs = type.Split('.').Last();
 
                 if (string.IsNullOrEmpty(name))
@@ -490,11 +476,17 @@ namespace Refactorizer.VSIX
             var references = new List<string>();
 
             // Add inheritanced types to references
-            if (baseList != null)
+            if (baseList == null)
+                return references;
+
+            var baseTypes = baseList.Types.Select(x => x.Type).ToList();
+            foreach (var type in baseTypes)
             {
-                var baseTypes = baseList.Types.ToList();
-                references.AddRange(baseTypes.Where(baseType => baseType != null)
-                    .Select(baseType => semanticModel.GetSymbolInfo(baseType.Type).Symbol.ToDisplayString(SymbolDisplayFormat.CSharpErrorMessageFormat)));
+                var symbol = semanticModel.GetSymbolInfo(type).Symbol;
+                if (symbol == null)
+                    continue;
+                
+                references.Add(symbol.ToDisplayString());
             }
 
             return references;

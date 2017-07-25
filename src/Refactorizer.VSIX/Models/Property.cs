@@ -14,13 +14,17 @@ namespace Refactorizer.VSIX.Models
 
         public IModel Parent { get; set; }
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
+
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Public;
 
         public bool HasChildren => false;
 
         public string Signature { get; set; }
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public Property(Guid id, string name, IModel parent, string signature)
         {

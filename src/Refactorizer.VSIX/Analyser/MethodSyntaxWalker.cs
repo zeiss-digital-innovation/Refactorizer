@@ -28,25 +28,32 @@ namespace Refactorizer.VSIX.Analyser
             foreach (var expressionSyntax in objectCreationExpressionSyntaxs)
             {
                 var symbol = _semanticModel.GetSymbolInfo(expressionSyntax).Symbol;
-                if (symbol != null)
-                {
-                    var type = symbol.ContainingSymbol.ToDisplayString();
-                    ClassReferences.Add(type);
-                }
+                if (symbol == null)
+                    continue;
+
+                var type = symbol.ContainingSymbol.ToDisplayString();
+                ClassReferences.Add(type);
             }
             base.VisitAssignmentExpression(node);
         }
 
         public override void VisitInvocationExpression(InvocationExpressionSyntax node)
         {
-            var type = _semanticModel.GetSymbolInfo(node).Symbol.ToDisplayString();
+            var symbol = _semanticModel.GetSymbolInfo(node).Symbol;
+            if (symbol == null)
+                return;
+
+            var type = symbol.ToDisplayString();
             MethodReferences.Add(type);
             base.VisitInvocationExpression(node);
         }
 
         public override void VisitVariableDeclaration(VariableDeclarationSyntax node)
         {
-            var type = _semanticModel.GetSymbolInfo(node.Type).Symbol.ToDisplayString();
+            var symbol = _semanticModel.GetSymbolInfo(node.Type).Symbol;
+            if (symbol == null)
+                return;
+            var type = symbol.ToDisplayString();
             ClassReferences.Add(type);
             base.VisitVariableDeclaration(node);
         }

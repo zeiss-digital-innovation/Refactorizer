@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Windows.Input;
 using Refactorizer.VSIX.Models;
 
 namespace Refactorizer.VSIX.View

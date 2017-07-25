@@ -12,10 +12,18 @@
              mc:Ignorable="d"
              d:DesignHeight="300" d:DesignWidth="300">
     <Grid Background="Transparent">
-        <Grid x:Name="ProgressSuccess" Margin="100 20 100 20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <Button Content="Refresh" Click="Refresh" />
+            <Button Content="Clear selection" Click="ClearSelection" />
+        </StackPanel>
+        <Grid x:Name="Tree" Margin="100 20 100 20" Grid.Row="1">
             <AdornerDecorator>
                 <controls:DependencyTreeControl ItemsSource="{Binding Projects}" 
-                      x:Name="Solution"
+                      x:Name="DependencyTreeControl"
                       Background="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowBackgroundBrushKey}}" 
                       BorderBrush="Transparent">
                     <TreeView.ItemContainerStyle>
@@ -27,7 +35,7 @@
                                 <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}"
                                                  Color="Transparent" />
                                 <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightTextBrushKey}"
-                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                                 Color="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTabSelectedTabColorKey}}" />
                             </Style.Resources>
                             <Setter Property="Background" Value="Transparent" />
                             <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
@@ -64,10 +72,16 @@
                         <HierarchicalDataTemplate
                             DataType="{x:Type view:ClassItemView}"
                             ItemsSource="{Binding Children}">
-                            <StackPanel Orientation="Horizontal">
-                                <imaging:CrispImage Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSFileNode}" />
-                                <TextBlock Margin="1 0 0 0" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions >
+                                    <ColumnDefinition Width="18" />
+                                    <ColumnDefinition Width="200" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions >
+                                <imaging:CrispImage Grid.Column="0" Width="16" Height="16" Moniker="{x:Static catalog:KnownMonikers.CSFileNode}" />
+                                <TextBlock Grid.Column="1" Text="{Binding Name}" Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}" />
+                                <Button Grid.Column="2" Content="Open" Command="{Binding Open}"/>
+                            </Grid>
                         </HierarchicalDataTemplate>
 
                         <HierarchicalDataTemplate
@@ -100,9 +114,12 @@
                 </controls:DependencyTreeControl>
             </AdornerDecorator>
         </Grid>
-        <Grid Margin="20" Width="200" Height="20" x:Name="ProgessBarWrapper">
+        <Grid Grid.Row="1" Margin="20" Width="200" Height="20" x:Name="ProgessBarWrapper">
             <ProgressBar Minimum="0" Maximum="100" x:Name="ProgressBar" IsIndeterminate="True" />
         </Grid>
-        <Label x:Name="Error" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Hidden">Please open solution first.</Label>
+        <Label x:Name="Error" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Hidden"
+               Foreground="{DynamicResource {x:Static vs_shell:EnvironmentColors.ToolWindowTextBrushKey}}">
+            Please open solution first.
+        </Label>
     </Grid>
 </UserControl>

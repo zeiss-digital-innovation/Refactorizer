@@ -12,15 +12,20 @@ namespace Refactorizer.VSIX.Models
 
         public string Name { get; set; }
 
+        public string FullName { get; set; }
+
         public IModel Parent { get; set; }
 
-        public ICollection<IModel> References { get; set; } = new List<IModel>();
+        public ICollection<IModel> OutReferences { get; set; } = new List<IModel>();
 
-        public Method(Guid id, string name, IModel parent)
+        public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
+
+        public Method(Guid id, string name, string fullName, IModel parent)
         {
             Id = id;
             Name = name;
             Parent = parent;
+            FullName = fullName;
         }
 
         public string ReturnType { get; set; }
@@ -30,6 +35,8 @@ namespace Refactorizer.VSIX.Models
         public string Signature => (ReturnType == null ? string.Empty : $"{ReturnType} ") + $"{Name} ({Parameter})";
 
         public bool HasChildren => false;
+
+        public bool IsHarmfull => OutReferences.Count < InReferences.Count;
 
         public AccessLevel AccessLevel { get; set; } = AccessLevel.Public;
     }

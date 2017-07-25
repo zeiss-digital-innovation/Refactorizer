@@ -54,6 +54,7 @@
     <Compile Include="Analyser\MethodSyntaxWalker.cs" />
     <Compile Include="ClassnameFormater.cs" />
     <Compile Include="CodeAnalyser.cs" />
+    <Compile Include="Controls\ElipseAdorner.cs" />
     <Compile Include="Converter\BrushColorConverter.cs" />
     <Compile Include="Controls\DependencyTreeControl.cs" />
     <Compile Include="Controls\DependencyTreeItemControl.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Controls\SolutionTree.xaml.cs">
       <DependentUpon>SolutionTree.xaml</DependentUpon>
     </Compile>
+    <Compile Include="RelayCommand.cs" />
     <Compile Include="View\FieldItemView.cs" />
     <Compile Include="View\MethodItemView.cs" />
     <Compile Include="View\NotifyPropertyChanged.cs" />
