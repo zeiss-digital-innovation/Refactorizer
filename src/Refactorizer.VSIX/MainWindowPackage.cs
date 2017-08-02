@@ -4,17 +4,11 @@
 // </copyright>
 //------------------------------------------------------------------------------
 
-using System;
-using System.ComponentModel.Design;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 using System.Runtime.InteropServices;
-using Microsoft.VisualStudio;
-using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
-using Microsoft.VisualStudio.Shell.Interop;
-using Microsoft.Win32;
+using Refactorizer.VSIX.Commands;
+using Refactorizer.VSIX.Controls;
 
 namespace Refactorizer.VSIX
 {
@@ -66,6 +60,7 @@ namespace Refactorizer.VSIX
         protected override void Initialize()
         {
             MainWindowCommand.Initialize(this);
+
             base.Initialize();
         }
     }

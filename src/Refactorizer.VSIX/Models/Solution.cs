@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace Refactorizer.VSIX.Models
 {
-    class Solution
+    class Solution : ISolution
     {
-        public List<Project> Projects { get; set; } = new List<Project>();
+        public List<IModel> Projects { get; set; } = new List<IModel>();
     }
 }

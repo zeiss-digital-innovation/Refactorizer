@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
+using MSProject = Microsoft.CodeAnalysis.Project;
 
 namespace Refactorizer.VSIX.Models
 {
@@ -11,7 +12,7 @@ namespace Refactorizer.VSIX.Models
     {
         public Guid Id { get; }
 
-        public ProjectId ProjectId { get; }
+        public ProjectId ProjectId => MSProject.Id;
 
         public string Name { get; set; }
 
@@ -24,10 +25,12 @@ namespace Refactorizer.VSIX.Models
 
         public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
-        public Project(Guid id, ProjectId projectId, string name)
+        public MSProject MSProject { get; set; }
+
+        public Project(Guid id, MSProject msProject, string name)
         {
             Id = id;
-            ProjectId = projectId;
+            MSProject = msProject;
             Name = name;
         }
 

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Windows.Input;
 
-namespace Refactorizer.VSIX
+namespace Refactorizer.VSIX.Commands
 {
     internal class RelayCommand : ICommand
     {

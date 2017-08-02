@@ -51,24 +51,32 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Analyser\ICodeAnalyser.cs" />
     <Compile Include="Analyser\MethodSyntaxWalker.cs" />
-    <Compile Include="ClassnameFormater.cs" />
-    <Compile Include="CodeAnalyser.cs" />
+    <Compile Include="Misc\ClassnameFormater.cs" />
+    <Compile Include="Analyser\CodeAnalyser.cs" />
     <Compile Include="Controls\ElipseAdorner.cs" />
-    <Compile Include="Converter\BrushColorConverter.cs" />
+    <Compile Include="Misc\BrushColorConverter.cs" />
     <Compile Include="Controls\DependencyTreeControl.cs" />
     <Compile Include="Controls\DependencyTreeItemControl.cs" />
     <Compile Include="Controls\BezierCurveAdorner.cs" />
-    <Compile Include="MainWindow.cs" />
-    <Compile Include="MainWindowCommand.cs" />
-    <Compile Include="MainWindowControl.xaml.cs">
+    <Compile Include="Controls\MainWindow.cs" />
+    <Compile Include="Commands\MainWindowCommand.cs" />
+    <Compile Include="Controls\MainWindowControl.xaml.cs">
       <DependentUpon>MainWindowControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="MainWindowPackage.cs" />
     <Compile Include="Exception\NoSolutionOpenException.cs" />
+    <Compile Include="Refactoring\ActionResult.cs" />
+    <Compile Include="Refactoring\ClassRefactoring.cs" />
+    <Compile Include="Refactoring\FieldRefactoring.cs" />
+    <Compile Include="Refactoring\IRefactoring.cs" />
+    <Compile Include="Refactoring\IRefactoringFactory.cs" />
+    <Compile Include="Refactoring\RefactoringFactory.cs" />
     <Compile Include="Models\Field.cs" />
     <Compile Include="Models\Class.cs" />
     <Compile Include="Models\IModel.cs" />
+    <Compile Include="Models\ISolution.cs" />
     <Compile Include="Models\Method.cs" />
     <Compile Include="Models\Namespace.cs" />
     <Compile Include="Models\Project.cs" />
@@ -79,16 +87,22 @@
     <Compile Include="Controls\SolutionTree.xaml.cs">
       <DependentUpon>SolutionTree.xaml</DependentUpon>
     </Compile>
-    <Compile Include="RelayCommand.cs" />
-    <Compile Include="View\FieldItemView.cs" />
-    <Compile Include="View\MethodItemView.cs" />
-    <Compile Include="View\NotifyPropertyChanged.cs" />
-    <Compile Include="View\DependencyTreeItemView.cs" />
-    <Compile Include="View\ClassItemView.cs" />
-    <Compile Include="View\NamespaceItemView.cs" />
-    <Compile Include="View\ProjectItemView.cs" />
-    <Compile Include="View\PropertyItemView.cs" />
-    <Compile Include="View\SolutionViewModel.cs" />
+    <Compile Include="Refactoring\MethodRefactoring.cs" />
+    <Compile Include="Refactoring\NamespaceRefactoring.cs" />
+    <Compile Include="Refactoring\ProjectRefactoring.cs" />
+    <Compile Include="Refactoring\PropertyRefactioring.cs" />
+    <Compile Include="Refactoring\Rewriter\DeleteRewriter.cs" />
+    <Compile Include="Commands\RelayCommand.cs" />
+    <Compile Include="ViewModels\FieldViewModel.cs" />
+    <Compile Include="ViewModels\IDependencyTreeItemViewModel.cs" />
+    <Compile Include="ViewModels\MethodViewModel.cs" />
+    <Compile Include="Misc\NotifyPropertyChanged.cs" />
+    <Compile Include="ViewModels\DependencyTreeItemViewModel.cs" />
+    <Compile Include="ViewModels\ClassViewModel.cs" />
+    <Compile Include="ViewModels\NamespaceViewModel.cs" />
+    <Compile Include="ViewModels\ProjectViewModel.cs" />
+    <Compile Include="ViewModels\PropertyViewModel.cs" />
+    <Compile Include="ViewModels\SolutionViewModel.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -99,7 +113,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Page Include="MainWindowControl.xaml">
+    <Page Include="Controls\MainWindowControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

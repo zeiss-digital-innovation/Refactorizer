@@ -1,21 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
+using Refactorizer.VSIX.Misc;
+using MSDocument = Microsoft.CodeAnalysis.Document;
 
 namespace Refactorizer.VSIX.Models
 {
     internal class Class : IModel
     {
-        public Class(Guid id, string name, IModel parent, string path)
+        public Class(Guid id, string name, IModel parent, MSDocument msDocument)
         {
             Id = id;
             Name = name;
             Parent = parent;
-            Path = path;
+            MSDocument = msDocument;
         }
 
         public string FullName => ClassnameFormater.FullName((Parent as Namespace)?.Name, Name);
 
         public string Name { get; set; }
+
+        public MSDocument MSDocument { get; set; }
 
         /// <inheritdoc />
         public IModel Parent { get; set; }
@@ -42,6 +46,6 @@ namespace Refactorizer.VSIX.Models
 
         public List<Namespace> ReferencedNamespaces { get; set; } = new List<Namespace>();
 
-        public string Path { get; set; }
+        public string Path => MSDocument.FilePath;
     }
 }

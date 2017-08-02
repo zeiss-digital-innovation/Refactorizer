@@ -5,7 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.View;
+using Refactorizer.VSIX.ViewModels;
 
 namespace Refactorizer.VSIX.Controls
 {
@@ -52,7 +52,7 @@ namespace Refactorizer.VSIX.Controls
 
         private void TreeCanvasItemLayoutUpdate(object sender, EventArgs e)
         {
-            var viewModel = DataContext as DependencyTreeItemView;
+            var viewModel = DataContext as DependencyTreeItemViewModel;
             if (viewModel == null)
                 return;
 

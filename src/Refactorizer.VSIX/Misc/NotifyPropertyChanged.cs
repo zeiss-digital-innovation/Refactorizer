@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace Refactorizer.VSIX.View
+namespace Refactorizer.VSIX.Misc
 {
     public class NotifyPropertyChanged : INotifyPropertyChanged
     {

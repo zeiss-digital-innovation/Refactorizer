@@ -1,9 +1,14 @@
 ﻿using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using EnvDTE;
+using Microsoft.VisualStudio.Shell;
+using Microsoft.VisualStudio.Shell.Interop;
+using Refactorizer.VSIX.Analyser;
 using Refactorizer.VSIX.Exception;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.View;
+using Refactorizer.VSIX.Refactoring;
+using Refactorizer.VSIX.ViewModels;
 
 namespace Refactorizer.VSIX.Controls
 {
@@ -12,14 +17,18 @@ namespace Refactorizer.VSIX.Controls
     /// </summary>
     public partial class SolutionTree : UserControl
     {
-        private readonly CodeAnalyser _codeAnalyser;
-        private Solution _solution;
+        private readonly ICodeAnalyser _codeAnalyser;
+        private readonly IRefactoringFactory _refactoringFactory;
+        private ISolution _solution;
 
         public SolutionTree()
         {
+            var dte = Package.GetGlobalService(typeof(SDTE)) as DTE;
+            _codeAnalyser = new CodeAnalyser(dte);
+
+            _refactoringFactory = new RefactoringFactory(dte);
+
             InitializeComponent();
-            
-            _codeAnalyser = new CodeAnalyser();
         }
 
         private void WindowLoaded(object sender, RoutedEventArgs e)
@@ -52,7 +61,7 @@ namespace Refactorizer.VSIX.Controls
                     {
                         ProgressBar.Visibility = Visibility.Hidden;
                         Tree.Visibility = Visibility.Visible;
-                        DataContext = new SolutionViewModel(_solution);
+                        DataContext = new SolutionViewModel(_solution, _refactoringFactory);
                     });
                 }
             }

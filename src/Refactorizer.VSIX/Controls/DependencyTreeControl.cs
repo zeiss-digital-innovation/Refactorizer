@@ -5,7 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.View;
+using Refactorizer.VSIX.ViewModels;
 
 namespace Refactorizer.VSIX.Controls
 {
@@ -14,6 +14,10 @@ namespace Refactorizer.VSIX.Controls
         public static readonly DependencyProperty DependencyTreeViewItemsProperty =
             DependencyProperty.Register("DependencyTreeViewItems", typeof(ObservableCollection<DependencyTreeItemControl>), typeof(DependencyTreeControl),
                 new UIPropertyMetadata(new ObservableCollection<DependencyTreeItemControl>()));
+
+        public DependencyTreeControl()
+        {
+        }
 
         private ObservableCollection<DependencyTreeItemControl> DependencyTreeViewItems
         {
@@ -47,7 +51,7 @@ namespace Refactorizer.VSIX.Controls
         {
             DependencyTreeViewItems.Add(newItem);
 
-            var view = newItem.DataContext as DependencyTreeItemView;
+            var view = newItem.DataContext as DependencyTreeItemViewModel;
             if (view == null)
                 throw new System.Exception($"DataContext is not a DependencyTreeItemView");
 
@@ -55,7 +59,7 @@ namespace Refactorizer.VSIX.Controls
             var root = DependencyTreeViewItems.FirstOrDefault(
                 x =>
                 {
-                    var dependencyTreeItemView = x.DataContext as DependencyTreeItemView;
+                    var dependencyTreeItemView = x.DataContext as DependencyTreeItemViewModel;
                     return dependencyTreeItemView != null &&
                            dependencyTreeItemView.RelatedModel.Id.Equals(view.RelatedModel.Id);
                 });
@@ -88,7 +92,7 @@ namespace Refactorizer.VSIX.Controls
                 if (parentControl == null)
                     continue;
 
-                var view = parentControl?.DataContext as DependencyTreeItemView;
+                var view = parentControl?.DataContext as DependencyTreeItemViewModel;
                 viewModel = view?.RelatedModel;
                 item = parentControl;
             }
@@ -97,7 +101,7 @@ namespace Refactorizer.VSIX.Controls
 
         public List<DependencyTreeItemControl> FindLastExpandedDependencyTreeViewItems(DependencyTreeItemControl root)
         {
-            var viewModel = root.DataContext as DependencyTreeItemView;
+            var viewModel = root.DataContext as DependencyTreeItemViewModel;
             if (viewModel == null)
                 return null;
 
@@ -120,15 +124,15 @@ namespace Refactorizer.VSIX.Controls
             return tmp;
         }
 
-        public DependencyTreeItemControl FindViewItemByViewModel(DependencyTreeItemView itemViewModel)
+        public DependencyTreeItemControl FindViewItemByViewModel(DependencyTreeItemViewModel itemViewModelModel)
         {
             foreach (var viewItem in DependencyTreeViewItems)
             {
-                var dataModel = viewItem.DataContext as DependencyTreeItemView;
+                var dataModel = viewItem.DataContext as DependencyTreeItemViewModel;
                 if (dataModel == null)
                     continue;
 
-                if (dataModel.RelatedModel.Id.Equals(itemViewModel.RelatedModel.Id))
+                if (dataModel.RelatedModel.Id.Equals(itemViewModelModel.RelatedModel.Id))
                     return viewItem;
             }
 
@@ -139,7 +143,7 @@ namespace Refactorizer.VSIX.Controls
         {
             foreach (var dependencyTreeViewItem in DependencyTreeViewItems)
             {
-                var itemViewModel = dependencyTreeViewItem.DataContext as DependencyTreeItemView;
+                var itemViewModel = dependencyTreeViewItem.DataContext as DependencyTreeItemViewModel;
                 if (itemViewModel != null)
                 {
                     if (itemViewModel.RelatedModel.Id.Equals(dataModel.Id))
@@ -154,12 +158,12 @@ namespace Refactorizer.VSIX.Controls
 
         public bool Contains(DependencyTreeItemControl dependencyTreeItemControl)
         {
-            var dependencyTreeItemView = dependencyTreeItemControl.DataContext as DependencyTreeItemView;
+            var dependencyTreeItemView = dependencyTreeItemControl.DataContext as DependencyTreeItemViewModel;
             if (dependencyTreeItemView == null)
                 return false;
 
             var id = dependencyTreeItemView.RelatedModel.Id;
-            return DependencyTreeViewItems.Select(x => x.DataContext as DependencyTreeItemView).ToList()
+            return DependencyTreeViewItems.Select(x => x.DataContext as DependencyTreeItemViewModel).ToList()
                 .Where(x => x != null).ToList()
                 .Where(x => x.RelatedModel != null).ToList()
                 .Exists(x => x.RelatedModel.Id.Equals(id));
