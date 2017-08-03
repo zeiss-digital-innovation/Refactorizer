@@ -6,9 +6,11 @@ using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Refactorizer.VSIX.Analyser;
 using Refactorizer.VSIX.Exceptions;
+using Refactorizer.VSIX.Misc;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings;
 using Refactorizer.VSIX.ViewModels;
+using Task = System.Threading.Tasks.Task;
 
 namespace Refactorizer.VSIX.Views
 {
@@ -31,12 +33,13 @@ namespace Refactorizer.VSIX.Views
             InitializeComponent();
         }
 
-        private void WindowLoaded(object sender, RoutedEventArgs e)
+        private async void WindowLoaded(object sender, RoutedEventArgs e)
         {
             if (_solution != null)
                 return;
 
             DoCreateGraph();
+
         }
 
         private void DoCreateGraph()

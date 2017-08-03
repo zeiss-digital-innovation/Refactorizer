@@ -1,8 +1,10 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using Refactorizer.VSIX.Commands;
+using Refactorizer.VSIX.Misc;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings;
+using Refactorizer.VSIX.Views;
 using Task = System.Threading.Tasks.Task;
 
 namespace Refactorizer.VSIX.ViewModels
@@ -15,8 +17,8 @@ namespace Refactorizer.VSIX.ViewModels
 
         public ClassViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory) : base(parent, relatedModel, refactoringFactory)
         {
-            Open = new RelayCommand(async param => await OpenAction(), param => true);
-            Delete = new RelayCommand(async param => await DeleteAction(), param => true);
+            Open = new RelayCommand(async param => await OpenAction());
+            Delete = new RelayCommand(param => DeleteAction());
 
             var @class = RelatedModel as Class;
             if (@class == null)
@@ -45,10 +47,9 @@ namespace Refactorizer.VSIX.ViewModels
             await refactoring.Open(@class);
         }
 
-        private async Task DeleteAction()
+        private void DeleteAction()
         {
-            MessageBoxResult messageBoxResult = MessageBox.Show("Are you sure?", "Delete Confirmation", MessageBoxButton.YesNo);
-            if (messageBoxResult == MessageBoxResult.Yes)
+            DialogManager.Create("Confirm delete", new DeleteConfirmDialog(async () =>
             {
                 var refactoring = Refactoring as ClassRefactoring;
                 if (refactoring == null)
@@ -67,7 +68,8 @@ namespace Refactorizer.VSIX.ViewModels
                 {
                     MessageBox.Show("Delete failed");
                 }
-            }
+                DialogManager.Close();
+            }, DialogManager.Close));
         }
     }
 }

@@ -21,19 +21,19 @@ namespace Refactorizer.VSIX.Controls
     /// </para>
     /// </remarks>
     [Guid("7f1dc8b9-34c0-4a97-8772-a414a634fc89")]
-    public class MainWindow : ToolWindowPane
+    public sealed class MainWindow : ToolWindowPane
     {
         /// <summary>
         /// Initializes a new instance of the <see cref="MainWindow"/> class.
         /// </summary>
         public MainWindow() : base(null)
         {
-            this.Caption = "Refactorizer - Dependency Graph";
+            Caption = "Refactorizer - Dependency Graph";
 
             // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
             // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
             // the object returned by the Content property.
-            this.Content = new Views.MainWindowControl();
+            Content = new Views.MainWindowControl();
         }
     }
 }

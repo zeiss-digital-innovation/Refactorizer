@@ -2,8 +2,10 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Input;
 using Refactorizer.VSIX.Commands;
+using Refactorizer.VSIX.Misc;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings;
+using Refactorizer.VSIX.Views;
 
 namespace Refactorizer.VSIX.ViewModels
 {
@@ -13,7 +15,7 @@ namespace Refactorizer.VSIX.ViewModels
 
         public NamespaceViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory) : base(parent, relatedModel, refactoringFactory)
         {
-            Delete = new RelayCommand(async param => await DeleteAction(), param => true);
+            Delete = new RelayCommand(param => DeleteAction(), param => true);
 
             var @namespace = RelatedModel as Namespace;
             if (@namespace == null)
@@ -23,10 +25,9 @@ namespace Refactorizer.VSIX.ViewModels
                 Children.Add(new ClassViewModel(this, @class, refactoringFactory));
         }
 
-        private async Task DeleteAction()
+        private void DeleteAction()
         {
-            MessageBoxResult messageBoxResult = MessageBox.Show("Are you sure?", "Delete Confirmation", MessageBoxButton.YesNo);
-            if (messageBoxResult == MessageBoxResult.Yes)
+            DialogManager.Create("Confirm delete", new DeleteConfirmDialog(async () =>
             {
                 var refactoring = Refactoring as NamespaceRefactoring;
                 if (refactoring == null)
@@ -45,7 +46,7 @@ namespace Refactorizer.VSIX.ViewModels
                 {
                     MessageBox.Show("Delete failed");
                 }
-            }
+            }, DialogManager.Close));
         }
     }
 }
