@@ -1,5 +1,5 @@
 ﻿using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.Refactoring;
+using Refactorizer.VSIX.Refactorings;
 using Project = Refactorizer.VSIX.Models.Project;
 
 namespace Refactorizer.VSIX.ViewModels

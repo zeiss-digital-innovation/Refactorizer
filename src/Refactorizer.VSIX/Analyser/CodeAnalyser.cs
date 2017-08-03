@@ -6,7 +6,7 @@ using EnvDTE;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
-using Refactorizer.VSIX.Exception;
+using Refactorizer.VSIX.Exceptions;
 using Refactorizer.VSIX.Models;
 using MSDocument = Microsoft.CodeAnalysis.Document;
 using MSSolution = Microsoft.CodeAnalysis.Solution;

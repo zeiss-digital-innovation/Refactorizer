@@ -2,7 +2,7 @@
 using System.Windows.Documents;
 using System.Windows.Media;
 
-namespace Refactorizer.VSIX.Controls
+namespace Refactorizer.VSIX.Adorners
 {
     class ElipseAdorner : Adorner
     {

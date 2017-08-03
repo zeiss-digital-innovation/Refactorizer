@@ -5,12 +5,12 @@ using EnvDTE;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using Refactorizer.VSIX.Analyser;
-using Refactorizer.VSIX.Exception;
+using Refactorizer.VSIX.Exceptions;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.Refactoring;
+using Refactorizer.VSIX.Refactorings;
 using Refactorizer.VSIX.ViewModels;
 
-namespace Refactorizer.VSIX.Controls
+namespace Refactorizer.VSIX.Views
 {
     /// <summary>
     /// Interaction logic for SolutionTree.xaml

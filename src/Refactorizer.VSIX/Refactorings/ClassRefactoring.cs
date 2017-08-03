@@ -6,9 +6,9 @@ using EnvDTE;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.Refactoring.Rewriter;
+using Refactorizer.VSIX.Refactorings.Rewriter;
 
-namespace Refactorizer.VSIX.Refactoring
+namespace Refactorizer.VSIX.Refactorings
 {
     internal class ClassRefactoring : IRefactoring
     {

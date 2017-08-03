@@ -1,7 +1,7 @@
 ﻿using EnvDTE;
 using Refactorizer.VSIX.ViewModels;
 
-namespace Refactorizer.VSIX.Refactoring
+namespace Refactorizer.VSIX.Refactorings
 {
     internal class RefactoringFactory : IRefactoringFactory
     {

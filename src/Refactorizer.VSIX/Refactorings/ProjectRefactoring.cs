@@ -1,6 +1,6 @@
 ﻿using EnvDTE;
 
-namespace Refactorizer.VSIX.Refactoring
+namespace Refactorizer.VSIX.Refactorings
 {
     internal class ProjectRefactoring : IRefactoring
     {

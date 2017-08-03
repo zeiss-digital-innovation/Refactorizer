@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using Refactorizer.VSIX.Adorners;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.ViewModels;
 

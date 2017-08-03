@@ -3,7 +3,7 @@ using System.Windows;
 using System.Windows.Input;
 using Refactorizer.VSIX.Commands;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.Refactoring;
+using Refactorizer.VSIX.Refactorings;
 
 namespace Refactorizer.VSIX.ViewModels
 {

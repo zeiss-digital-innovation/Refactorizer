@@ -1,6 +1,6 @@
 ﻿using System.Windows.Controls;
 
-namespace Refactorizer.VSIX.Controls
+namespace Refactorizer.VSIX.Views
 {
     /// <summary>
     /// Interaction logic for MainWindowControl.

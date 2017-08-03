@@ -1,4 +1,4 @@
-﻿namespace Refactorizer.VSIX.Refactoring
+﻿namespace Refactorizer.VSIX.Refactorings
 {
     public enum ActionResult
     {

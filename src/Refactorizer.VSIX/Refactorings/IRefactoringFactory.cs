@@ -1,6 +1,6 @@
 ﻿using Refactorizer.VSIX.ViewModels;
 
-namespace Refactorizer.VSIX.Refactoring
+namespace Refactorizer.VSIX.Refactorings
 {
     public interface IRefactoringFactory
     {

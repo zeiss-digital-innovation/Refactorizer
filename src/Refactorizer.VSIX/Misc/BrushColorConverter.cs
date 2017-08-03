@@ -2,6 +2,7 @@
 using System.Globalization;
 using System.Windows.Data;
 using System.Windows.Media;
+using Refactorizer.VSIX.Adorners;
 using Refactorizer.VSIX.Controls;
 
 namespace Refactorizer.VSIX.Misc

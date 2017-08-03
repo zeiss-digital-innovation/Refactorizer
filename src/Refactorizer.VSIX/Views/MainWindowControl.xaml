@@ -1,9 +1,10 @@
-﻿<UserControl x:Class="Refactorizer.VSIX.Controls.MainWindowControl"
+﻿<UserControl x:Class="Refactorizer.VSIX.Views.MainWindowControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:controls="clr-namespace:Refactorizer.VSIX.Controls"
+             xmlns:views="clr-namespace:Refactorizer.VSIX.Views"
              mc:Ignorable="d"
              d:DesignHeight="800" d:DesignWidth="600"
              Name="Refactorizer">
@@ -11,6 +12,6 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
-        <controls:SolutionTree></controls:SolutionTree>
+        <views:SolutionTree></views:SolutionTree>
     </Grid>
 </UserControl>

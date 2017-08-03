@@ -2,7 +2,7 @@
 using EnvDTE;
 using Refactorizer.VSIX.Models;
 
-namespace Refactorizer.VSIX.Refactoring
+namespace Refactorizer.VSIX.Refactorings
 {
     internal class FieldRefactoring : IRefactoring
     {

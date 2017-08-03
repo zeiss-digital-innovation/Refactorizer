@@ -2,7 +2,7 @@
 using System.Windows.Input;
 using Refactorizer.VSIX.Commands;
 using Refactorizer.VSIX.Models;
-using Refactorizer.VSIX.Refactoring;
+using Refactorizer.VSIX.Refactorings;
 using Task = System.Threading.Tasks.Task;
 
 namespace Refactorizer.VSIX.ViewModels
