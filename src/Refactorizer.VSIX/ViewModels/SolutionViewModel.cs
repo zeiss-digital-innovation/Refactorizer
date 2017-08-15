@@ -11,7 +11,7 @@ namespace Refactorizer.VSIX.ViewModels
         public SolutionViewModel(ISolution solution, IRefactoringFactory refactoringFactory)
         {
             // Create view model childs using data model
-            Projects = new ReadOnlyCollection<ProjectViewModel>((from project in solution.Projects select new ProjectViewModel(null, project, refactoringFactory)).ToList());
+            Projects = new ReadOnlyCollection<ProjectViewModel>((from project in solution.Projects select new ProjectViewModel(this, null, project, refactoringFactory)).ToList());
         }
 
         public IReadOnlyCollection<ProjectViewModel> Projects { get; }

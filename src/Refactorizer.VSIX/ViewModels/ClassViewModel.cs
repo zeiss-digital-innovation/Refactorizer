@@ -14,24 +14,28 @@ namespace Refactorizer.VSIX.ViewModels
         public ICommand Open { get; set; }
 
         public ICommand Delete { get; set; }
+        
+        public ICommand Rename { get; set; }
 
-        public ClassViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory) : base(parent, relatedModel, refactoringFactory)
+        public ClassViewModel(SolutionViewModel root, DependencyTreeItemViewModel parent, IModel relatedModel, 
+            IRefactoringFactory refactoringFactory) : base(root, parent, relatedModel, refactoringFactory)
         {
             Open = new RelayCommand(async param => await OpenAction());
             Delete = new RelayCommand(param => DeleteAction());
+            Rename = new RelayCommand(param => RenameAction());
 
             var @class = RelatedModel as Class;
             if (@class == null)
                 return;
 
             foreach (var field in @class.Fields)
-                Children.Add(new FieldViewModel(this, field, refactoringFactory));
+                Children.Add(new FieldViewModel(root, this, field, refactoringFactory));
             
             foreach (var property in @class.Properties)
-                Children.Add(new PropertyViewModel(this, property, refactoringFactory));
+                Children.Add(new PropertyViewModel(root, this, property, refactoringFactory));
 
             foreach (var method in @class.Methods)
-                Children.Add(new MethodViewModel(this, method, refactoringFactory));
+                Children.Add(new MethodViewModel(root, this, method, refactoringFactory));
         }
 
         private async Task OpenAction()
@@ -70,6 +74,33 @@ namespace Refactorizer.VSIX.ViewModels
                 }
                 DialogManager.Close();
             }, DialogManager.Close));
+        }
+
+        private void RenameAction()
+        {
+            var refactoring = Refactoring as ClassRefactoring;
+            if (refactoring == null)
+                return;
+
+            var @class = RelatedModel as Class;
+            if (@class == null)
+                return;
+
+            var control = new RenameDialog(async () =>
+            {
+                var content = DialogManager.GetContent();
+                var viewModel = content.DataContext as RenameDialogViewModel;
+                if (viewModel == null)
+                    return;
+
+                var newName = viewModel.Text;
+                await refactoring.Rename(@class, newName);
+                Name = newName;
+
+                DialogManager.Close();
+            }, DialogManager.Close, @class.Name);
+
+            DialogManager.Create("Rename", control);
         }
     }
 }

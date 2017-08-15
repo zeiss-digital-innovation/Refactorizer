@@ -36,21 +36,11 @@ namespace Refactorizer.VSIX.Analyser
 
         private Dictionary<Property, string> _propertyToTypeMapping = new Dictionary<Property, string>();
 
-        private readonly DTE _dte;
+        private readonly SolutionParserBridge _solutionParserBridge;
 
-        public CodeAnalyser(DTE dte)
+        public CodeAnalyser(SolutionParserBridge solutionParserBridge)
         {
-            _dte = dte;
-        }
-
-        private async Task<MSSolution> GetCurrentSolution()
-        {
-            var solutionFullName = _dte?.Solution.FullName;
-            if (string.IsNullOrEmpty(solutionFullName))
-                throw new NoSolutionOpenException();
-
-            var msBuildWorkspace = MSBuildWorkspace.Create();
-            return await msBuildWorkspace.OpenSolutionAsync(solutionFullName);
+            _solutionParserBridge = solutionParserBridge;
         }
 
         /// <summary>
@@ -64,10 +54,10 @@ namespace Refactorizer.VSIX.Analyser
             ResetTmpStorage();
 
             // TODO: Handle all parallel to improve performance
-            foreach (var msProject in (await GetCurrentSolution()).Projects)
+            foreach (var msProject in (await _solutionParserBridge.GetSolution()).Projects)
             {
                 var referencedProjectIds = msProject.ProjectReferences.Select(x => x.ProjectId).ToList();
-                var project = new Project(Guid.NewGuid(), msProject, msProject.Name);
+                var project = new Project(msProject.Id.Id, msProject.Name);
                 _projectToProjectMapping.Add(project, referencedProjectIds);
                 await AddDocuments(msProject, project);
 
@@ -110,7 +100,7 @@ namespace Refactorizer.VSIX.Analyser
                 var references = keyValue.Value;
                 foreach (var reference in references)
                 {
-                    var projectReference = solution.Projects.FirstOrDefault(x => (x as Project).ProjectId.Equals(reference));
+                    var projectReference = solution.Projects.FirstOrDefault(x => x.Id.Equals(reference.Id));
                     if (projectReference == null)
                         continue;
 
@@ -300,7 +290,7 @@ namespace Refactorizer.VSIX.Analyser
                     var baseList = classDeclaration.BaseList;
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
-                    CreateClass(classDeclaration, symbol, @namespace, referencedClasses, semanticModel, msDocument);
+                    CreateClass(classDeclaration, symbol, @namespace, referencedClasses, semanticModel, msDocument, false);
                 }
 
                 // Use the syntax tree to get all interface declations inside
@@ -312,7 +302,7 @@ namespace Refactorizer.VSIX.Analyser
                     var baseList = interfaceDeclaration.BaseList;
                     var referencedClasses = GetReturnType(baseList, semanticModel);
 
-                    CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, semanticModel, msDocument);
+                    CreateClass(interfaceDeclaration, symbol, @namespace, referencedClasses, semanticModel, msDocument, true);
                 }
             }
         }
@@ -338,11 +328,14 @@ namespace Refactorizer.VSIX.Analyser
         }
 
         private void CreateClass(SyntaxNode syntaxNode, ISymbol symbol, Namespace @namespace,
-            List<string> referencedClasses, SemanticModel model, MSDocument msDocument)
+            List<string> referencedClasses, SemanticModel model, MSDocument msDocument, bool isInterface)
         {
             var className = symbol.Name;
 
-            var @class = new Class(Guid.NewGuid(), className, @namespace, msDocument);
+            var @class = new Class(msDocument.Id.Id, className, @namespace, msDocument.FilePath)
+            {
+                IsInterface = isInterface
+            };
             _classToClassMapping.Add(@class, referencedClasses);
 
             @namespace.Classes.Add(@class);

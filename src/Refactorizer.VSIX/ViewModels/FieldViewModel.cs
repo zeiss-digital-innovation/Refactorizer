@@ -5,7 +5,8 @@ namespace Refactorizer.VSIX.ViewModels
 {
     internal class FieldViewModel : DependencyTreeItemViewModel
     {
-        public FieldViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory) : base(parent, relatedModel, refactoringFactory)
+        public FieldViewModel(SolutionViewModel root, DependencyTreeItemViewModel parent, IModel relatedModel,
+            IRefactoringFactory refactoringFactory) : base(root, parent, relatedModel, refactoringFactory)
         {
         }
 

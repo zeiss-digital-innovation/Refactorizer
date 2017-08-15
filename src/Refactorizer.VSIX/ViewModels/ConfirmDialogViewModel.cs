@@ -8,7 +8,7 @@ namespace Refactorizer.VSIX.ViewModels
 {
     public class ConfirmDialogViewModel
     {
-        public string Message { get;set; }
+        public string Message { get; set; }
 
         public ICommand Confirm { get; set; }
 
@@ -19,6 +19,5 @@ namespace Refactorizer.VSIX.ViewModels
             Confirm = new RelayCommand(param => confirmAction());
             Cancel = new RelayCommand(param => cancelAction());
         }
- 
     }
 }

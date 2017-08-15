@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using System.Windows.Input;
-using Refactorizer.VSIX.Commands;
+﻿using System.Collections.ObjectModel;
 using Refactorizer.VSIX.Misc;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings;
@@ -12,6 +8,8 @@ namespace Refactorizer.VSIX.ViewModels
     internal abstract class DependencyTreeItemViewModel : NotifyPropertyChanged, IDependencyTreeItemViewModel
     {
         protected readonly DependencyTreeItemViewModel Parent;
+
+        protected readonly SolutionViewModel Root;
 
         public IModel RelatedModel { get; }
 
@@ -47,10 +45,11 @@ namespace Refactorizer.VSIX.ViewModels
 
         public ObservableCollection<DependencyTreeItemViewModel> Children { get; } = new ObservableCollection<DependencyTreeItemViewModel>();
 
-        protected DependencyTreeItemViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory)
+        protected DependencyTreeItemViewModel(SolutionViewModel root, DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory)
         {
             Parent = parent;
             RelatedModel = relatedModel;
+            Root = root;
 
             Refactoring = refactoringFactory.GetRefactoringForViewModel(this);
 
@@ -61,6 +60,15 @@ namespace Refactorizer.VSIX.ViewModels
             Children.Remove(child);
         }
 
-        public virtual string Name => RelatedModel.Name;
+        protected string RelatedModelName;
+
+        public virtual string Name
+        {
+            get => RelatedModel.Name;
+            set { 
+                RelatedModel.Name = value;
+                SetField(ref RelatedModelName, value, "Name");
+            }
+        }
     }
 }

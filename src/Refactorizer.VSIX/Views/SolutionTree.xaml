@@ -69,6 +69,7 @@
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Delete" Command="{Binding Delete}" />
+                                        <MenuItem Header="Rename" Command="{Binding Rename}" />
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
                             </StackPanel>
@@ -84,6 +85,7 @@
                                     <ContextMenu>
                                         <MenuItem Header="Open" Command="{Binding Open}" />
                                         <MenuItem Header="Delete" Command="{Binding Delete}" />
+                                        <MenuItem Header="Rename" Command="{Binding Rename}" />
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
                             </StackPanel>
@@ -98,6 +100,7 @@
                                 <StackPanel.ContextMenu>
                                     <ContextMenu>
                                         <MenuItem Header="Delete" Command="{Binding Delete}" />
+                                        <MenuItem Header="Rename" Command="{Binding Rename}" />
                                     </ContextMenu>
                                 </StackPanel.ContextMenu>
                             </StackPanel>

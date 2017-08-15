@@ -4,35 +4,62 @@ using System.Linq;
 using System.Threading.Tasks;
 using EnvDTE;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Refactorizer.VSIX.Analyser;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings.Rewriter;
 
 namespace Refactorizer.VSIX.Refactorings
 {
-    internal class ClassRefactoring : IRefactoring
+    internal class ClassRefactoring : RefactoringBase, IRefactoring
     {
         private readonly DTE _dte;
+        private readonly SolutionParserBridge _solutionParserBridge;
 
-        public ClassRefactoring(DTE dte)
+        public ClassRefactoring(DTE dte, SolutionParserBridge solutionParserBridge)
         {
             _dte = dte;
+            _solutionParserBridge = solutionParserBridge;
         }
 
         public async Task<ActionResult> Delete(Class @class)
-        { 
-            var document = @class.MSDocument;
-            var rewriter = new DeleteRewriter();
+        {
+            var document = await _solutionParserBridge.GetDocument(@class);
             var syntaxRoot = await document.GetSyntaxRootAsync();
-            var semanticModel = await document.GetSemanticModelAsync();
 
+            // Only one class/interface in this file
+            // No need to change the syntax, delete the file
             int classOrInterfacesDefinitionsInFile
                 = @class.IsInterface ? CountInterfaces(syntaxRoot) : CountClasses(syntaxRoot);
             if (classOrInterfacesDefinitionsInFile <= 1)
             {
-                RemoveFile(@class);
+                await RemoveFile(@class);
                 return ActionResult.Success;
             }
+
+            return await UseRewriter(@class, new DeleteRewriter());
+
+        }
+
+        public async Task<ActionResult> Rename(Class @class, string newName)
+        {
+            var document = await _solutionParserBridge.GetDocument(@class);
+            var syntaxRoot = await document.GetSyntaxRootAsync();
+            var semanticModel = await document.GetSemanticModelAsync();
+
+            var symbol = @class.IsInterface 
+                ? semanticModel.GetSymbolInfo(GetInterfaceDeclartionSyntax(@class.Name, syntaxRoot, semanticModel)).Symbol 
+                : ModelExtensions.GetDeclaredSymbol(semanticModel, GetClassDeclarationSyntax(@class.Name, syntaxRoot, semanticModel));
+
+            return await RenameSymbol(newName, document, symbol);
+        }
+
+        private async Task<ActionResult> UseRewriter(Class @class, CSharpSyntaxRewriter rewriter)
+        {
+            var document = await _solutionParserBridge.GetDocument(@class);
+            var syntaxRoot = await document.GetSyntaxRootAsync();
+            var semanticModel = await document.GetSemanticModelAsync();
 
             SyntaxNode newRoot;
             if (@class.IsInterface)
@@ -54,16 +81,7 @@ namespace Refactorizer.VSIX.Refactorings
                 newRoot = syntaxRoot.ReplaceNode(oldNode, newNode).NormalizeWhitespace();
             }
 
-            try
-            {
-                File.WriteAllText(@class.Path, newRoot.ToFullString());
-            }
-            catch (System.Exception)
-            {
-                return ActionResult.Failed;
-            }
-
-            return ActionResult.Success;
+            return ApplyNewRootToClass(@class, newRoot);
         }
 
         public async Task<ActionResult> Open(Class @class)
@@ -77,9 +95,10 @@ namespace Refactorizer.VSIX.Refactorings
             });
         }
 
-        private void RemoveFile(Class @class)
+        private async Task RemoveFile(Class @class)
         {
-            _dte.Solution.FindProjectItem(@class.MSDocument.Name).Delete();
+            var document = await _solutionParserBridge.GetDocument(@class);
+            _dte.Solution.FindProjectItem(document.Name).Delete();
         }
 
         protected List<InterfaceDeclarationSyntax> GetInterfaceDeclartionSyntaxes(SyntaxNode syntaxRoot)
@@ -124,7 +143,7 @@ namespace Refactorizer.VSIX.Refactorings
             var classes = GetClassDeclarationSyntaxes(syntaxRoot);
             foreach (var classDeclarationSyntax in classes)
             {
-                var symbolInfo = semanticModel.GetDeclaredSymbol(classDeclarationSyntax);
+                var symbolInfo = ModelExtensions.GetDeclaredSymbol(semanticModel, classDeclarationSyntax);
                 if (symbolInfo == null)
                     continue;
 

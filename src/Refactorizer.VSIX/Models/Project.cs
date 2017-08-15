@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.CodeAnalysis;
-using MSProject = Microsoft.CodeAnalysis.Project;
 
 namespace Refactorizer.VSIX.Models
 {
     class Project : IModel
     {
         public Guid Id { get; }
-
-        public ProjectId ProjectId => MSProject.Id;
 
         public string Name { get; set; }
 
@@ -25,12 +18,9 @@ namespace Refactorizer.VSIX.Models
 
         public ICollection<IModel> InReferences { get; set; } = new List<IModel>();
 
-        public MSProject MSProject { get; set; }
-
-        public Project(Guid id, MSProject msProject, string name)
+        public Project(Guid id, string name)
         {
             Id = id;
-            MSProject = msProject;
             Name = name;
         }
 

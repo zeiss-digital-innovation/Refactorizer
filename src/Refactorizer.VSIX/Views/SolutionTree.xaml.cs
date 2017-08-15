@@ -26,9 +26,10 @@ namespace Refactorizer.VSIX.Views
         public SolutionTree()
         {
             var dte = Package.GetGlobalService(typeof(SDTE)) as DTE;
-            _codeAnalyser = new CodeAnalyser(dte);
+            var solutionHelper = new SolutionParserBridge(dte);
 
-            _refactoringFactory = new RefactoringFactory(dte);
+            _codeAnalyser = new CodeAnalyser(solutionHelper);
+            _refactoringFactory = new RefactoringFactory(dte, solutionHelper);
 
             InitializeComponent();
         }

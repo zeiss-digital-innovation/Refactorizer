@@ -1,34 +1,38 @@
 ﻿using System.Windows;
 using System.Windows.Input;
 using Refactorizer.VSIX.Commands;
+using Refactorizer.VSIX.Misc;
 using Refactorizer.VSIX.Models;
 using Refactorizer.VSIX.Refactorings;
-using Task = System.Threading.Tasks.Task;
+using Refactorizer.VSIX.Views;
 
 namespace Refactorizer.VSIX.ViewModels
 {
     internal class MethodViewModel : DependencyTreeItemViewModel
     {
-        public MethodViewModel(DependencyTreeItemViewModel parent, IModel relatedModel, IRefactoringFactory refactoringFactory) : base(parent, relatedModel, refactoringFactory)
+        public MethodViewModel(SolutionViewModel root, DependencyTreeItemViewModel parent, IModel relatedModel,
+            IRefactoringFactory refactoringFactory) : base(root, parent, relatedModel, refactoringFactory)
         {
-            Delete = new RelayCommand(async param => await DeleteAction(), param => true);
+            Delete = new RelayCommand(param => DeleteAction());
+            Rename = new RelayCommand(param => RenameAction());
         }
 
         public ICommand Delete { get; set; }
 
-        private async Task DeleteAction()
+        public ICommand Rename { get; set; }
+
+        private void DeleteAction()
         {
-            MessageBoxResult messageBoxResult = MessageBox.Show("Are you sure?", "Delete Confirmation", MessageBoxButton.YesNo);
-            if (messageBoxResult == MessageBoxResult.Yes)
+            var refactoring = Refactoring as MethodRefactoring;
+            if (refactoring == null)
+                return;
+
+            var method = RelatedModel as Method;
+            if (method == null)
+                return;
+
+            DialogManager.Create("Confirm delete", new DeleteConfirmDialog(async () =>
             {
-                var refactoring = Refactoring as MethodRefactoring;
-                if (refactoring == null)
-                    return;
-
-                var method = RelatedModel as Method;
-                if (method == null)
-                    return;
-
                 var result = await refactoring.Delete(method);
                 if (result == ActionResult.Success)
                 {
@@ -38,9 +42,42 @@ namespace Refactorizer.VSIX.ViewModels
                 {
                     MessageBox.Show("Delete failed");
                 }
-            }
+                DialogManager.Close();
+            }, DialogManager.Close));
         }
 
-        public override string Name => (RelatedModel as Method)?.Signature ?? RelatedModel.Name;
+        private void RenameAction()
+        {
+            var refactoring = Refactoring as MethodRefactoring;
+            if (refactoring == null)
+                return;
+
+            var method = RelatedModel as Method;
+            if (method == null)
+                return;
+
+            DialogManager.Create("Rename", new RenameDialog(async () =>
+            {
+                var content = DialogManager.GetContent();
+                var viewModel = content.DataContext as RenameDialogViewModel;
+                if (viewModel == null)
+                    return;
+
+                var newName = viewModel.Text;
+                await refactoring.Rename(method, newName);
+
+                Name = newName;
+                DialogManager.Close();
+            }, DialogManager.Close, method.Name));
+        }
+
+        public override string Name
+        {
+            get => (RelatedModel as Method)?.Signature ?? RelatedModel.Name;
+            set { 
+                RelatedModel.Name = value;
+                SetField(ref RelatedModelName, value, "Name");
+            }
+        }
     }
 }

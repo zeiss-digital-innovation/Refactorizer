@@ -53,6 +53,7 @@
   <ItemGroup>
     <Compile Include="Analyser\ICodeAnalyser.cs" />
     <Compile Include="Analyser\MethodSyntaxWalker.cs" />
+    <Compile Include="Analyser\SolutionParserBridge.cs" />
     <Compile Include="Controls\IDialogControl.cs" />
     <Compile Include="Misc\ClassnameFormater.cs" />
     <Compile Include="Analyser\CodeAnalyser.cs" />
@@ -65,7 +66,12 @@
     <Compile Include="Commands\MainWindowCommand.cs" />
     <Compile Include="Misc\DialogManager.cs" />
     <Compile Include="Misc\DialogMode.cs" />
+    <Compile Include="Refactorings\RefactoringBase.cs" />
     <Compile Include="ViewModels\ConfirmDialogViewModel.cs" />
+    <Compile Include="Views\RenameDialog.xaml.cs">
+      <DependentUpon>RenameDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\RenameDialogViewModel.cs" />
     <Compile Include="Views\DeleteConfirmDialog.xaml.cs">
       <DependentUpon>DeleteConfirmDialog.xaml</DependentUpon>
     </Compile>
@@ -120,6 +126,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Views\RenameDialog.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\DeleteConfirmDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

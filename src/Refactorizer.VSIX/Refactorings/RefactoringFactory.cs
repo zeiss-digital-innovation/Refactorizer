@@ -1,4 +1,5 @@
 ﻿using EnvDTE;
+using Refactorizer.VSIX.Analyser;
 using Refactorizer.VSIX.ViewModels;
 
 namespace Refactorizer.VSIX.Refactorings
@@ -7,26 +8,29 @@ namespace Refactorizer.VSIX.Refactorings
     {
         private readonly DTE _dte;
 
-        public RefactoringFactory(DTE dte)
+        private readonly SolutionParserBridge _solutionParserBridge;
+
+        public RefactoringFactory(DTE dte, SolutionParserBridge solutionParserBridge)
         {
             _dte = dte;
+            _solutionParserBridge = solutionParserBridge;
         }
 
         public IRefactoring GetRefactoringForViewModel(IDependencyTreeItemViewModel viewModel)
         {
             if (viewModel is ClassViewModel)
-                return new ClassRefactoring(_dte);
+                return new ClassRefactoring(_dte, _solutionParserBridge);
 
             if (viewModel is FieldViewModel)
                 return new FieldRefactoring();
 
             if (viewModel is MethodViewModel)
-                return new MethodRefactoring();
+                return new MethodRefactoring(_solutionParserBridge);
             
             if (viewModel is NamespaceViewModel)
             {
-                var classRefactoring = new ClassRefactoring(_dte);
-                return new NamespaceRefactoring(classRefactoring);
+                var classRefactoring = new ClassRefactoring(_dte, _solutionParserBridge);
+                return new NamespaceRefactoring(classRefactoring, _solutionParserBridge);
             }
 
             if (viewModel is ProjectViewModel)
