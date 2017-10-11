@@ -17,7 +17,7 @@ namespace Refactorizer.VSIX.Adorners
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var color = IsSelected ? Colors.OrangeRed : Colors.White;
+            var color = IsSelected ? Colors.OrangeRed : Colors.Black;
             drawingContext.DrawEllipse(new SolidColorBrush(color), new Pen(new SolidColorBrush(color), 1), Center, 5.0, 5.0);
         }
     }

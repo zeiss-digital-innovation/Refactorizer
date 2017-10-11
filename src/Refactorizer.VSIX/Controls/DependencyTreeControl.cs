@@ -19,7 +19,7 @@ namespace Refactorizer.VSIX.Controls
         {
         }
 
-        private ObservableCollection<DependencyTreeItemControl> DependencyTreeViewItems
+        public ObservableCollection<DependencyTreeItemControl> DependencyTreeViewItems
         {
             get => (ObservableCollection<DependencyTreeItemControl>)GetValue(DependencyTreeViewItemsProperty);
             set => SetValue(DependencyTreeViewItemsProperty, value);

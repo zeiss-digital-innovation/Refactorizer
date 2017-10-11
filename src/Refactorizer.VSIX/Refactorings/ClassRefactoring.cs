@@ -39,7 +39,6 @@ namespace Refactorizer.VSIX.Refactorings
             }
 
             return await UseRewriter(@class, new DeleteRewriter());
-
         }
 
         public async Task<ActionResult> Rename(Class @class, string newName)

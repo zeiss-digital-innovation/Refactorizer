@@ -28,8 +28,8 @@ namespace Refactorizer.VSIX.Adorners
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var color = IsSelected ? Colors.DodgerBlue : IsHarmfull ? Colors.OrangeRed : Colors.White;
-            var brush = new SolidColorBrush(color) {Opacity = IsSelected ? 1 : 0.5};
+            var color = IsSelected ? Colors.DodgerBlue : IsHarmfull ? Colors.OrangeRed : Colors.Black;
+            var brush = new SolidColorBrush(color) {Opacity = IsSelected ? 1 : 0.1};
             var pen = new Pen(brush, 1.5);
 
             var pathFigure = new PathFigure();
@@ -38,7 +38,7 @@ namespace Refactorizer.VSIX.Adorners
 
             var pathGeometry = new PathGeometry(new[] { pathFigure });
             drawingContext.DrawGeometry(Brushes.Transparent, pen, pathGeometry);
-            drawingContext.DrawEllipse(new SolidColorBrush(color), new Pen(new SolidColorBrush(color), 1), From, 1.5, 1.5);
+            drawingContext.DrawEllipse(brush, pen, From, 1.5, 1.5);
 
             //drawingContext.DrawEllipse(new SolidColorBrush(Colors.Red), new Pen(new SolidColorBrush(Colors.Red), 1), ControlOne, 1.0, 1.0);
             //drawingContext.DrawEllipse(new SolidColorBrush(Colors.Green), new Pen(new SolidColorBrush(Colors.Green), 1), ControlTwo, 1.0, 1.0);

@@ -20,6 +20,8 @@ namespace Refactorizer.VSIX.Controls
 
         public List<DependencyTreeItemControl> ReferenceControls = new List<DependencyTreeItemControl>();
 
+        public bool Update = false;
+
         private ElipseAdorner _itemAlias;
         private int _yOffset = 12;
 
@@ -41,21 +43,44 @@ namespace Refactorizer.VSIX.Controls
         {
             return new DependencyTreeItemControl(_host);
         }
-
         private void TreeCanvasItemDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
         {
+            Update = true;
+
             if (!_host.Contains(this))
                 _host.AddTreeViewItem(this);
 
             LayoutUpdated -= TreeCanvasItemLayoutUpdate;
             LayoutUpdated += TreeCanvasItemLayoutUpdate;
+
+            Expanded -= UpdateRender;
+            Expanded += UpdateRender;
+
+            Selected -= UpdateRender;
+            Selected += UpdateRender;
+
+            Collapsed -= UpdateRender;
+            Collapsed += UpdateRender;
+
+            Unselected -= UpdateRender;
+            Unselected += UpdateRender;
+        }
+
+        private void UpdateRender(object sender, RoutedEventArgs e)
+        {
+            foreach (var control in _host.DependencyTreeViewItems)
+            {
+                control.Update = true;
+            }
         }
 
         private void TreeCanvasItemLayoutUpdate(object sender, EventArgs e)
         {
             var viewModel = DataContext as DependencyTreeItemViewModel;
-            if (viewModel == null)
+            if (viewModel == null || Update == false)
                 return;
+
+            Update = false;
 
             if (IsVisible && _itemAlias == null)
                 DrawItemAlias();
@@ -153,7 +178,7 @@ namespace Refactorizer.VSIX.Controls
 
         private void DrawItemAlias()
         {
-            var itemAliasPoint = new Point(560, _yOffset);
+            var itemAliasPoint = new Point(860, _yOffset);
             _itemAlias = new ElipseAdorner(this, itemAliasPoint);
             _host.AdornerLayer.Add(_itemAlias);
             _host.AdornerLayer.UpdateLayout();
@@ -162,7 +187,7 @@ namespace Refactorizer.VSIX.Controls
         private void CreateOrUpdateArdoner( IModel thisModel, DependencyTreeItemControl treeItemControlOfReference, IModel modelOfReference, Dictionary<Guid, BezierCurveAdorner> store, bool isLeft)
         {
             BezierCurveAdorner bezierCurveAdorner;
-            var toRight = 550 + (isLeft ? 0 : 20);
+            var toRight = 850 + (isLeft ? 0 : 20);
             var halfRight = Math.Round((double)toRight / 2);
             var positionFactor = isLeft ? -1 : 1;
 
@@ -174,6 +199,9 @@ namespace Refactorizer.VSIX.Controls
             var offsetFactor = Math.Ceiling((to.Y - from.Y) / 50);
             offsetFactor *= offsetFactor < 0 ? -1 : 1;
             var xOffset = 20 * (offsetFactor > 1 ? offsetFactor > halfRight ? halfRight : offsetFactor : 1) * positionFactor;
+            var maxOffset = 400;
+            var minOffset = -1 * maxOffset;
+            xOffset = xOffset > maxOffset ? maxOffset : xOffset < minOffset ? minOffset : xOffset;
 
             controlOne.X = from.X + xOffset;
             controlOne.Y = from.Y;
@@ -186,11 +214,11 @@ namespace Refactorizer.VSIX.Controls
                 bezierCurveAdorner = store[modelOfReference.Id];
                 if (bezierCurveAdorner.IsSelected != IsSelected)
                 {
+                    Update = true;
                     DeleteArdoner(modelOfReference.Id);
                     return;
                 }
 
-                // Adding this item to InReference of referenced tree view item to draw the backline
                 // Only update if some some point has changed
                 if (bezierCurveAdorner.From != from ||
                     bezierCurveAdorner.ControlOne != controlOne ||
