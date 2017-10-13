@@ -14,8 +14,6 @@ namespace Refactorizer.VSIX.Adorners
             To = to;
         }
 
-        public bool IsSelected { get; set; }
-
         public bool IsHarmfull { get; set; }
 
         public Point From { get; set; }
@@ -28,8 +26,8 @@ namespace Refactorizer.VSIX.Adorners
 
         protected override void OnRender(DrawingContext drawingContext)
         {
-            var color = IsSelected ? Colors.DodgerBlue : IsHarmfull ? Colors.OrangeRed : Colors.Black;
-            var brush = new SolidColorBrush(color) {Opacity = IsSelected ? 1 : 0.1};
+            var color = IsHarmfull ? Colors.OrangeRed : Colors.Black;
+            var brush = new SolidColorBrush(color) {Opacity = 0.3};
             var pen = new Pen(brush, 1.5);
 
             var pathFigure = new PathFigure();

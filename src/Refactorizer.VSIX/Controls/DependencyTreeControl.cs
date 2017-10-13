@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -14,6 +15,9 @@ namespace Refactorizer.VSIX.Controls
         public static readonly DependencyProperty DependencyTreeViewItemsProperty =
             DependencyProperty.Register("DependencyTreeViewItems", typeof(ObservableCollection<DependencyTreeItemControl>), typeof(DependencyTreeControl),
                 new UIPropertyMetadata(new ObservableCollection<DependencyTreeItemControl>()));
+
+
+        public bool SomeChildIsSelected = false;
 
         public DependencyTreeControl()
         {
@@ -51,18 +55,16 @@ namespace Refactorizer.VSIX.Controls
         {
             DependencyTreeViewItems.Add(newItem);
 
-            var view = newItem.DataContext as DependencyTreeItemViewModel;
-            if (view == null)
-                throw new System.Exception($"DataContext is not a DependencyTreeItemView");
+            var viewModel = newItem.DataContext as DependencyTreeItemViewModel;
+            if (viewModel == null)
+                return;
 
-            // Search root
-            var root = DependencyTreeViewItems.FirstOrDefault(
-                x =>
-                {
-                    var dependencyTreeItemView = x.DataContext as DependencyTreeItemViewModel;
-                    return dependencyTreeItemView != null &&
-                           dependencyTreeItemView.RelatedModel.Id.Equals(view.RelatedModel.Id);
-                });
+            var model = viewModel.RelatedModel;
+            var rootView = FindParentOfView(model);
+            if (rootView == null)
+                return;
+
+            var root = FindControlByViewModel(rootView);
 
             if (root == null)
                 return;
@@ -109,7 +111,7 @@ namespace Refactorizer.VSIX.Controls
 
             foreach (var childViewModel in viewModel.Children)
             {
-                var childTreeItem = FindViewItemByViewModel(childViewModel);
+                var childTreeItem = FindControlByViewModel(childViewModel);
                 if (childViewModel.IsExpanded)
                 {
                     tmp = tmp.Union(FindLastExpandedDependencyTreeViewItems(childTreeItem)).ToList();
@@ -124,7 +126,7 @@ namespace Refactorizer.VSIX.Controls
             return tmp;
         }
 
-        public DependencyTreeItemControl FindViewItemByViewModel(DependencyTreeItemViewModel itemViewModelModel)
+        public DependencyTreeItemControl FindControlByViewModel(DependencyTreeItemViewModel itemViewModelModel)
         {
             foreach (var viewItem in DependencyTreeViewItems)
             {
@@ -151,6 +153,50 @@ namespace Refactorizer.VSIX.Controls
                         return dependencyTreeViewItem;
                     }
                 }
+            }
+
+            return null;
+        }
+
+        public DependencyTreeItemViewModel FindParentOfView(IModel child)
+        {
+            var solutionViewModel = DataContext as SolutionViewModel;
+            if (solutionViewModel == null)
+                return null;
+            var index = 0;
+        
+            while (index < solutionViewModel.Projects.Count)
+            {
+                var projectViewModel = solutionViewModel.Projects.ToList()[index];
+                var relatedModel = projectViewModel.RelatedModel;
+                if (relatedModel.Id.Equals(child.Id))
+                {
+                    return null;
+                }
+                var result = FindParentOfView(projectViewModel, child);
+                if (result != null)
+                    return result;
+
+                index++;
+            }
+
+            return null;
+        }
+
+        private DependencyTreeItemViewModel FindParentOfView(DependencyTreeItemViewModel parent, IModel child)
+        {
+            var index = 0;
+            while (index < parent.Children.Count)
+            {
+                var dependencyTreeItemViewModel = parent.Children.ToList()[index];
+                if (dependencyTreeItemViewModel.RelatedModel.Id.Equals(child.Id))
+                    return parent;
+
+                var result = FindParentOfView(dependencyTreeItemViewModel, child);
+                if (result != null)
+                    return result;
+
+                index++;
             }
 
             return null;

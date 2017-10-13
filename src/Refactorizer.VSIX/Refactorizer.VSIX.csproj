@@ -58,7 +58,6 @@
     <Compile Include="Misc\ClassnameFormater.cs" />
     <Compile Include="Analyser\CodeAnalyser.cs" />
     <Compile Include="Adorners\ElipseAdorner.cs" />
-    <Compile Include="Misc\BrushColorConverter.cs" />
     <Compile Include="Controls\DependencyTreeControl.cs" />
     <Compile Include="Controls\DependencyTreeItemControl.cs" />
     <Compile Include="Adorners\BezierCurveAdorner.cs" />
