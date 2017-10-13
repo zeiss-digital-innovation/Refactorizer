@@ -133,7 +133,7 @@ namespace Refactorizer.VSIX.Controls
 
                 if (referenceTreeItemControl.IsExpanded)
                 {
-                    var referenceChildren = referenceTreeItemControl.Childrens;
+                    var referenceChildren = GetChildsForExpandedControl(referenceTreeItemControl);
                     foreach (var referenceChild in referenceChildren)
                     {
                         var referenceChildModel = referenceChild.DataContext as DependencyTreeItemViewModel;
@@ -162,6 +162,26 @@ namespace Refactorizer.VSIX.Controls
                 CreateOrUpdateInRefrenceArdoner(relatedModel, referenceTreeItemControl, reference);
             }
             Trace.WriteLine("-------------------------------------");
+        }
+
+        private List<DependencyTreeItemControl> GetChildsForExpandedControl(DependencyTreeItemControl root)
+        {
+            var result = new List<DependencyTreeItemControl>();
+
+            // TODO: Exsisitert eine Referenz zu dem dependencyTreeItemControl?
+            foreach (var dependencyTreeItemControl in root.Childrens)
+            {
+                if (dependencyTreeItemControl.IsExpanded)
+                {
+                    result.AddRange(GetChildsForExpandedControl(dependencyTreeItemControl));
+                }
+                else
+                {
+                    result.Add(dependencyTreeItemControl);
+                }
+            }
+
+            return result;
         }
 
         private ICollection<IModel> GetInReferences(IModel relatedModel)
