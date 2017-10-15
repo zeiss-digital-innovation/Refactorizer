@@ -69,11 +69,10 @@ namespace Refactorizer.VSIX.Controls
             if (root == null)
                 return;
 
-            if (root.Childrens.Contains(newItem))
+            if (root.Children.Contains(newItem))
                 return;
 
-            newItem.Root = root;
-            root.Childrens.Add(newItem);
+            root.Children.Add(newItem);
         }
 
         public DependencyTreeItemControl FindReferencedItemOrParent(IModel viewModel)
